@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OANP — Open Agent Negotiation Protocol</title>
+<meta name="description" content="An open protocol for fair negotiation between AI agents in commerce. Extends MCP, ACP, and UCP with a fairness arbitration layer.">
+<meta property="og:title" content="OANP — Open Agent Negotiation Protocol">
+<meta property="og:description" content="An open protocol for fair negotiation between AI agents in commerce. v0.1 spec publishing April 22, 2026.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://oanp.dev">
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --fg: #e8e8e8;
+    --muted: #8a8a8a;
+    --accent: #7dd3fc;
+    --border: #222;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--fg); font-family: ui-monospace, "SF Mono", "Menlo", monospace; font-size: 14px; line-height: 1.6; }
+  body { padding: 4rem 1.5rem; max-width: 720px; margin: 0 auto; }
+  header { margin-bottom: 3rem; }
+  h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+  h1 .brand { color: var(--accent); }
+  h2 { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 2.5rem; margin-bottom: 1rem; }
+  p { margin-bottom: 1rem; max-width: 60ch; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
+  a:hover { border-bottom-color: var(--accent); }
+  .muted { color: var(--muted); }
+  .lede { font-size: 1rem; margin-bottom: 2rem; }
+  ul { list-style: none; padding: 0; }
+  ul li { padding: 0.35rem 0; border-bottom: 1px dashed var(--border); }
+  ul li:last-child { border-bottom: none; }
+  ul li .label { display: inline-block; min-width: 7rem; color: var(--muted); }
+  code { background: #161616; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.92em; }
+  .status { display: inline-block; padding: 0.15rem 0.5rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.85em; color: var(--muted); margin-top: 0.5rem; }
+  .status .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #facc15; margin-right: 0.4rem; vertical-align: middle; }
+  footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="brand">OANP</span> — Open Agent Negotiation Protocol</h1>
+  <div class="status"><span class="dot"></span>v0.1 draft · publishing 2026-04-22</div>
+</header>
+
+<p class="lede">An open protocol for fair negotiation between AI agents in commerce.</p>
+
+<h2>The gap</h2>
+<p>MCP, ACP, and UCP solve discovery and payment for agentic commerce. When a buyer agent negotiates with a merchant agent, there is no protocol-level guarantee that the stronger model doesn't systematically exploit the weaker one.</p>
+<p>OANP specifies a three-party flow — <strong>buyer</strong>, <strong>arbiter</strong>, <strong>merchant</strong> — with seven mechanically checkable fairness invariants and a signed final agreement. It's designed to extend existing stacks, not replace them.</p>
+
+<h2>Designed to coexist</h2>
+<ul>
+  <li><span class="label">MCP</span> Anthropic — discovery</li>
+  <li><span class="label">ACP</span> OpenAI + Stripe — payment</li>
+  <li><span class="label">UCP</span> Google — commerce envelope</li>
+  <li><span class="label">A2A</span> Google — transport</li>
+  <li><span class="label">OANP</span> — fairness layer between discovery and payment</li>
+</ul>
+
+<h2>Status</h2>
+<p>v0.1 draft is under review at <a href="https://github.com/oanp-protocol/spec/pull/1">oanp-protocol/spec#1</a>. Final publication is targeted for <strong>April 22, 2026</strong>. A reference implementation maintained by <a href="https://valyzen.com">Valyzen</a> is mapped at <a href="https://github.com/oanp-protocol/reference">oanp-protocol/reference</a>.</p>
+
+<h2>Repositories</h2>
+<ul>
+  <li><span class="label">spec</span> <a href="https://github.com/oanp-protocol/spec">github.com/oanp-protocol/spec</a></li>
+  <li><span class="label">reference</span> <a href="https://github.com/oanp-protocol/reference">github.com/oanp-protocol/reference</a></li>
+  <li><span class="label">org</span> <a href="https://github.com/oanp-protocol">github.com/oanp-protocol</a></li>
+</ul>
+
+<h2>Follow</h2>
+<ul>
+  <li><span class="label">X / Twitter</span> <a href="https://x.com/oanpdev">@oanpdev</a></li>
+</ul>
+
+<footer>
+  Apache 2.0. Open standard, open implementation.
+</footer>
+</body>
+</html>
