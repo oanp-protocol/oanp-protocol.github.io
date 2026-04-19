@@ -275,53 +275,57 @@
 
   <article>
 
-    <p class="lede">When we started building <a href="https://valyzen.com">Valyzen</a> as an agent-mediated flight booking service, we thought we were solving a distribution problem — how to get a buyer agent to a merchant agent efficiently enough that the whole thing wouldn't be slower than just opening Kayak.</p>
+    <p class="lede">In early 2025, I set out to build something simple: an agent that could shop on behalf of a customer. At that point, only <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">MCP</a> existed. You could wire an agent to tools, and that was the whole stack for agent commerce.</p>
 
-    <p>Turns out distribution isn't the problem. The existing agent commerce protocols already handle it:</p>
+    <p>The first thing I ran into wasn't a discovery problem or a payment problem. It was a <strong>negotiation</strong> problem.</p>
+
+    <h2>A gap hiding in plain sight</h2>
+
+    <p>Merchants wanted to sell. They had surplus capacity, tiered pricing, off-peak slots, inventory they'd rather move at a small margin than not sell at all.</p>
+
+    <p>Customers wanted to buy. They had flexibility on timing, willingness to accept a different seat or room or SKU for a better price, priorities that weren't a flat "cheapest."</p>
+
+    <p>But between them — in the agent era — <strong>no mechanism existed to actually let that conversation happen.</strong> The list-price, take-it-or-leave-it model works when human attention is the bottleneck. It doesn't need to keep working that way once agents handle the conversation.</p>
+
+    <h2>What 2025 added — and didn't</h2>
+
+    <p>Through 2025, the agent commerce stack filled in fast:</p>
 
     <ul>
       <li><a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener"><strong>MCP</strong></a> (Anthropic) — agent discovery and tool invocation.</li>
       <li><a href="https://agenticcommerce.dev/" target="_blank" rel="noopener"><strong>ACP</strong></a> (OpenAI + Stripe) — agent-initiated checkout and payment.</li>
       <li><strong>UCP</strong> (Google) — a universal commerce envelope.</li>
       <li><a href="https://a2aproject.github.io/A2A/" target="_blank" rel="noopener"><strong>A2A</strong></a> (Google) — agent-to-agent transport.</li>
+      <li><strong>TAP</strong>, <strong>Agent Pay</strong>, and adjacent standards — more payment rails for agents.</li>
     </ul>
 
-    <p>You can already send a buyer agent to browse merchant offerings via MCP or UCP, and you can already settle a purchase via ACP or TAP or Agent Pay. Those layers work.</p>
+    <p>You could now send a buyer agent to browse merchant offerings via MCP or UCP, and you could settle a purchase via ACP or TAP or Agent Pay. Discovery and settlement got genuinely better.</p>
 
-    <p>What's missing is the bit in the middle: the <strong>negotiation</strong>.</p>
+    <p>The negotiation gap stayed.</p>
 
-    <h2>The step between "I found it" and "I paid for it"</h2>
+    <p>That's when it became clear this wasn't going to solve itself as a side effect of someone else's protocol. The existing stack answers <em>how does an agent find a merchant?</em> and <em>how does an agent pay a merchant?</em> — but skips the step where they <em>agree on terms</em>. When two agents have different views of what's fair, there's no standard to arbitrate that without building a bespoke solution that tends to favor whoever built it.</p>
 
-    <p>Between "buyer agent has found a merchant agent willing to sell" and "buyer agent has paid," there is often a conversation. Sometimes it's short ("yes, take the list price"). Sometimes it's a multi-turn exchange over price, delivery terms, constraints, bundles, alternatives.</p>
+    <h2>What the agent era can bring back</h2>
 
-    <p>When that conversation happens between two AI agents — each optimizing for the party it represents, each capable of learning how to win — <strong>nobody has specified what "fair" looks like.</strong></p>
+    <p>Before the digital era, people negotiated. Markets, small business, direct sales — anywhere a customer and a merchant met in person, some form of negotiation happened as a matter of course. Digital scale made that economically impossible: merchants couldn't run individual negotiations with every customer, so they posted list prices and everyone took them. Efficiency won, optionality lost.</p>
 
-    <p>That's not an academic concern. Early research has begun to document measurable exploitation rates when LLM agents negotiate against each other. When a more sophisticated agent consistently captures disproportionate surplus from a less sophisticated one, that's not a distribution problem; that's a protocol problem.</p>
+    <p>AI agents dissolve that constraint. An agent can run thousands of negotiations in parallel, at near-zero marginal cost. The question isn't <em>"can we afford to negotiate at scale?"</em> anymore — it's <strong>"what are the rules of negotiation in the agent era?"</strong></p>
 
-    <p>The existing stack gives you no answer to:</p>
-    <ul>
-      <li>How many rounds of offer and counter-offer are allowed?</li>
-      <li>Can a merchant agent quietly change a constraint mid-negotiation?</li>
-      <li>If both agents claim a deal is fair, how does a third party verify they're right?</li>
-      <li>What does the paper trail look like afterwards — signed, auditable, replayable?</li>
-      <li>Who adjudicates disputes, and against what standard?</li>
-    </ul>
+    <p>That question is what OANP answers.</p>
 
-    <p>Without protocol-level answers, every implementation makes them up. And the answers tend to favor whichever party built the implementation.</p>
+    <h2>Why this needs its own protocol</h2>
 
-    <h2>Why negotiation needs its own protocol</h2>
+    <p>Three reasons this layer deserves its own spec rather than being folded into MCP, ACP, or UCP.</p>
 
-    <p>Three arguments for why this layer deserves its own spec rather than being folded into MCP or ACP.</p>
+    <p><strong>Different semantics.</strong> MCP is about making tools discoverable and invocable. ACP is about completing a transaction. Negotiation is about <em>reaching agreement</em>. The data model is different (sessions, rounds, constraints, concessions) and the failure modes are different (impasse, bad faith, asymmetric information). Shoehorning negotiation into a discovery or payment protocol produces awkward fits in both directions.</p>
 
-    <p><strong>First, different semantics.</strong> MCP is about making tools discoverable and invocable. ACP is about completing a transaction. Negotiation is about <em>reaching agreement</em>. The data model is different (sessions, rounds, constraints, concessions) and the failure modes are different (impasse, bad faith, asymmetric information). Shoehorning negotiation into a discovery or payment protocol produces awkward fits in both directions.</p>
+    <p><strong>Arbitration is a trust boundary.</strong> Payment protocols assume the parties have already decided to transact. Negotiation is the phase where they <em>decide</em>. For that phase to be trusted, it generally needs a third party who is structurally neutral — not the buyer, not the merchant, and not chosen by either. That's a different trust topology from the one MCP or ACP assume.</p>
 
-    <p><strong>Second, arbitration is a trust boundary.</strong> Payment protocols assume the parties have already decided to transact. Negotiation is the phase where they <em>decide</em>. For that phase to be trusted, it generally needs a third party who is structurally neutral — not the buyer, not the merchant, and not chosen by either. That's a different trust topology from the one MCP or ACP assume.</p>
-
-    <p><strong>Third, fairness needs to be mechanically checkable.</strong> A negotiation outcome can be reviewed after the fact only if the full message history is preserved, canonicalized, and signed against a known set of rules. A protocol that specifies those rules — and specifies them precisely enough that a third party can test conformance — is a protocol that turns "fair" from a marketing claim into a verifiable property.</p>
+    <p><strong>Fairness has to be mechanically checkable.</strong> A negotiation outcome can be reviewed after the fact only if the full message history is preserved, canonicalized, and signed against a known set of rules. A protocol that specifies those rules — and specifies them precisely enough that a third party can test conformance — is a protocol that turns "fair" from a marketing claim into a verifiable property.</p>
 
     <h2>What we're publishing today: OANP v0.1</h2>
 
-    <p>The <strong>Open Agent Negotiation Protocol</strong> (OANP) is a draft specification for the negotiation layer between discovery and payment. As of today, <a href="https://github.com/oanp-protocol/spec/releases/tag/v0.1.0" target="_blank" rel="noopener">v0.1.0 is published</a>.</p>
+    <p>The <strong>Open Agent Negotiation Protocol</strong> (OANP) is the draft specification for this layer. As of today, <a href="https://github.com/oanp-protocol/spec/releases/tag/v0.1.0" target="_blank" rel="noopener">v0.1.0 is published</a>. The specific mechanisms are novel enough that we've also filed a patent on the implementation technique — but the protocol itself is Apache 2.0. The patent covers how you might build it; the spec covers what a conformant session must look like from the outside. Anyone implementing against the observable semantics is free to do so under the open license.</p>
 
     <p>Three files in the spec, about 600 lines total:</p>
 
@@ -377,18 +381,26 @@
 
     <p>Issues on <a href="https://github.com/oanp-protocol/spec" target="_blank" rel="noopener">github.com/oanp-protocol/spec</a> are the front door. We're also reachable as <a href="https://twitter.com/oanpdev" target="_blank" rel="noopener">@oanpdev</a> on X.</p>
 
-    <h2>Who built this</h2>
+    <h2>Why travel as the testbed</h2>
 
-    <p>OANP is shepherded by <a href="https://valyzen.com" target="_blank" rel="noopener">Valyzen</a>, the team building an agent-mediated travel layer. We maintain the reference implementation at <a href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener"><code>oanp-protocol/reference</code></a>. We are not the protocol — we are one implementation of the protocol, the same way Cloudflare is one CA rather than being TLS.</p>
+    <p>We chose travel as the first domain to prove the protocol's mechanics. Not because travel is the biggest agent commerce market — it isn't — but because <strong>travel has the highest friction in commerce</strong>: booking commissions, change fees, premium-class markups, opaque pricing, fare-class surplus. If the protocol survives travel's margin structure, the mechanics translate down to general ecommerce, where service fees are much lower.</p>
 
-    <p>The protocol is Apache 2.0. The organization on GitHub is <a href="https://github.com/oanp-protocol" target="_blank" rel="noopener">oanp-protocol</a>. Future governance is deliberately left placeholder in v0.1: as contributors arrive, we'll formalize.</p>
+    <p>Starting with ecommerce would have been the opposite move: the margins wouldn't have left room to validate the negotiation economics, and any design choice would read as over-engineered. Travel gave us the margin headroom to prove the thesis. Ecommerce is the scale expansion once the thesis holds.</p>
+
+    <p>You'll see that reflected in the worked example on the <a href="/">docs site</a> — an SFO → JFK negotiation. The protocol itself is domain-agnostic; flights are the first proof point.</p>
+
+    <h2>Governance</h2>
+
+    <p>The protocol is Apache 2.0. The organization on GitHub is <a href="https://github.com/oanp-protocol" target="_blank" rel="noopener">oanp-protocol</a>. Governance is deliberately left placeholder in v0.1: as contributors arrive, we'll formalize into something closer to a working group with published decision records.</p>
+
+    <p>The reference implementation lives at <a href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener"><code>oanp-protocol/reference</code></a>. Alternative implementations in any language are welcome; the conformance checklist and invariants are the source of truth, not any single implementation.</p>
 
     <h2>What happens next</h2>
 
     <ul>
       <li><strong>v0.2</strong> takes the feedback that arrives over the next few weeks and picks the highest-impact extensions — likely multi-merchant sessions and a richer set of default fairness profiles.</li>
-      <li><strong>Valyzen</strong>'s own implementation will be cross-checked against the spec.</li>
-      <li><strong>Integration examples</strong> for MCP and ACP will be written against the reference implementation.</li>
+      <li><strong>Integration examples</strong> for MCP and ACP will be written against the reference implementation, showing end-to-end discovery → negotiation → payment flows.</li>
+      <li><strong>Second domain</strong> — beyond travel, the reference implementation will extend to a general ecommerce example to validate that the mechanics translate to lower-margin categories.</li>
     </ul>
 
     <p>The gap was real. The layer is specifiable. Here is v0.1.</p>
@@ -408,7 +420,7 @@
   </article>
 </main>
 
-<div class="page-footer">© Open Agent Negotiation Protocol · maintained by <a href="https://valyzen.com" target="_blank" rel="noopener">Valyzen</a> · Apache 2.0</div>
+<div class="page-footer">© Open Agent Negotiation Protocol · <a href="https://github.com/oanp-protocol" target="_blank" rel="noopener">github.com/oanp-protocol</a> · Apache 2.0</div>
 
 <script>
   document.getElementById('theme-toggle').addEventListener('click', function() {
