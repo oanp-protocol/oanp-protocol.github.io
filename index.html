@@ -236,7 +236,7 @@
         <span>Search or ask…</span>
         <kbd>⌘K</kbd>
       </div>
-      <a class="nav-link" id="blog-link">Blog</a>
+      <a class="nav-link" href="/blog/">Blog</a>
       <a class="nav-link" href="https://github.com/oanp-protocol" target="_blank" rel="noopener">GitHub</a>
       <button class="icon-btn" id="theme-toggle" title="Toggle theme">
         <span class="moon">☾</span>
@@ -552,10 +552,6 @@
 
   document.getElementById('search-btn').addEventListener('click', function() {
     alert('Search coming soon — use ⌘F to find on page for now.');
-  });
-  document.getElementById('blog-link').addEventListener('click', function(e) {
-    e.preventDefault();
-    alert('Blog coming with the Apr 22 launch.');
   });
 
   document.querySelectorAll('.copy-page').forEach(function(btn) {
