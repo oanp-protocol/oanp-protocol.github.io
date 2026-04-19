@@ -1,8 +1,14 @@
 # oanp.dev
 
-Static landing page for the Open Agent Negotiation Protocol, served via GitHub Pages at [oanp.dev](https://oanp.dev).
+Documentation site for the Open Agent Negotiation Protocol, served via GitHub Pages at [oanp.dev](https://oanp.dev).
 
-Single-file HTML with inlined CSS. No build step.
+Single-file HTML with inlined CSS + hash-based routing between pages. No build step.
+
+## Structure
+
+`index.html` contains all pages as `<article class="page" data-page-id="...">` sections. Client-side JS (end of file) swaps the active page on sidebar clicks and updates the URL hash. Theme toggle (light / dark) persists via `localStorage`.
+
+Sections with full content: intro, three-role-model, commitments, fairness-invariants, message-format, coexistence. Remaining sections render "Coming soon" cards. When a section graduates to full content, edit its `<article>` block.
 
 ## Deploy
 

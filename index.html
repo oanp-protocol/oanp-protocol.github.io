@@ -1,83 +1,578 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OANP — Open Agent Negotiation Protocol</title>
-<meta name="description" content="An open protocol for fair negotiation between AI agents in commerce. Extends MCP, ACP, and UCP with a fairness arbitration layer.">
-<meta property="og:title" content="OANP — Open Agent Negotiation Protocol">
-<meta property="og:description" content="An open protocol for fair negotiation between AI agents in commerce. v0.1 spec publishing April 22, 2026.">
+<meta name="description" content="OANP is an open-source standard for fair, verifiable negotiation between AI agents. A neutral arbiter enforces the rules — without either side revealing private information.">
+
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://oanp.dev">
-<link rel="icon" href="data:,">
+<meta property="og:url" content="https://oanp.dev/">
+<meta property="og:title" content="OANP — Open Agent Negotiation Protocol">
+<meta property="og:description" content="An open standard for fair, verifiable negotiation between AI agents. Extends MCP, ACP, UCP with a fairness arbitration layer.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@oanpdev">
+<meta name="twitter:title" content="OANP — Open Agent Negotiation Protocol">
+<meta name="twitter:description" content="An open standard for fair, verifiable negotiation between AI agents. Extends MCP, ACP, UCP with a fairness arbitration layer.">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230891b2'/%3E%3Cstop offset='0.5' stop-color='%237c3aed'/%3E%3Cstop offset='1' stop-color='%23059669'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0a;
-    --fg: #e8e8e8;
-    --muted: #8a8a8a;
-    --accent: #7dd3fc;
-    --border: #222;
-  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { background: var(--bg); color: var(--fg); font-family: ui-monospace, "SF Mono", "Menlo", monospace; font-size: 14px; line-height: 1.6; }
-  body { padding: 4rem 1.5rem; max-width: 720px; margin: 0 auto; }
-  header { margin-bottom: 3rem; }
-  h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
-  h1 .brand { color: var(--accent); }
-  h2 { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 2.5rem; margin-bottom: 1rem; }
-  p { margin-bottom: 1rem; max-width: 60ch; }
-  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.15s; }
-  a:hover { border-bottom-color: var(--accent); }
-  .muted { color: var(--muted); }
-  .lede { font-size: 1rem; margin-bottom: 2rem; }
-  ul { list-style: none; padding: 0; }
-  ul li { padding: 0.35rem 0; border-bottom: 1px dashed var(--border); }
-  ul li:last-child { border-bottom: none; }
-  ul li .label { display: inline-block; min-width: 7rem; color: var(--muted); }
-  code { background: #161616; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.92em; }
-  .status { display: inline-block; padding: 0.15rem 0.5rem; border: 1px solid var(--border); border-radius: 3px; font-size: 0.85em; color: var(--muted); margin-top: 0.5rem; }
-  .status .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #facc15; margin-right: 0.4rem; vertical-align: middle; }
-  footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
+
+  :root {
+    --bg: #ffffff; --bg-subtle: #fafaf9; --bg-code: #f4f4f5; --bg-frame: #f5f5f4;
+    --border: #e7e5e4; --border-strong: #d6d3d1;
+    --text: #0c0a09; --text-secondary: #44403c; --text-dim: #78716c; --text-faint: #a8a29e;
+    --link: #7c3aed; --accent: #7c3aed; --accent-bg: #f5f3ff; --accent-border: #ddd6fe;
+    --buyer: #0891b2; --buyer-bg: rgba(8,145,178,0.06); --buyer-border: rgba(8,145,178,0.25);
+    --arbiter: #7c3aed; --arbiter-bg: rgba(124,58,237,0.06); --arbiter-border: rgba(124,58,237,0.25);
+    --merchant: #059669; --merchant-bg: rgba(5,150,105,0.06); --merchant-border: rgba(5,150,105,0.25);
+    --vault-bg: #fefce8; --vault-border: #fde68a; --vault-label: #a16207; --vault-text: #713f12;
+    --callout-bg: #f5f3ff; --callout-border: #8b5cf6; --callout-text: #4c1d95;
+    --warn-bg: #fef3c7; --warn-border: #fbbf24;
+  }
+  [data-theme="dark"] {
+    --bg: #0c0c0c; --bg-subtle: #131313; --bg-code: #1a1a1a; --bg-frame: #141414;
+    --border: #262626; --border-strong: #404040;
+    --text: #fafafa; --text-secondary: #d4d4d4; --text-dim: #a3a3a3; --text-faint: #737373;
+    --link: #a78bfa; --accent: #a78bfa; --accent-bg: rgba(167,139,250,0.1); --accent-border: rgba(167,139,250,0.3);
+    --buyer: #67e8f9; --buyer-bg: rgba(103,232,249,0.06); --buyer-border: rgba(103,232,249,0.25);
+    --arbiter: #c4b5fd; --arbiter-bg: rgba(196,181,253,0.06); --arbiter-border: rgba(196,181,253,0.28);
+    --merchant: #6ee7b7; --merchant-bg: rgba(110,231,183,0.06); --merchant-border: rgba(110,231,183,0.25);
+    --vault-bg: rgba(234,179,8,0.07); --vault-border: rgba(234,179,8,0.3); --vault-label: #fde047; --vault-text: #fef3c7;
+    --callout-bg: rgba(167,139,250,0.08); --callout-border: #a78bfa; --callout-text: #ddd6fe;
+    --warn-bg: rgba(251,191,36,0.08); --warn-border: rgba(251,191,36,0.3);
+  }
+
+  html, body { background: var(--bg); color: var(--text); transition: background 0.15s, color 0.15s; }
+  body { font-family: 'Inter',-apple-system,system-ui,sans-serif; font-size: 15px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+  code { font-family: 'JetBrains Mono',monospace; background: var(--bg-code); padding: 0.12rem 0.42rem; border-radius: 4px; font-size: 0.86em; color: var(--text); border: 1px solid var(--border); }
+  a { color: var(--link); text-decoration: none; cursor: pointer; }
+  a:hover { text-decoration: underline; }
+
+  .topnav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.85); border-bottom: 1px solid var(--border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  [data-theme="dark"] .topnav { background: rgba(12,12,12,0.85); }
+  .topnav-inner { max-width: 1400px; margin: 0 auto; padding: 0.7rem 1.5rem; display: flex; align-items: center; gap: 2rem; }
+  .brand { display: flex; align-items: center; gap: 0.55rem; font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em; color: var(--text); cursor: pointer; flex-shrink: 0; }
+  .brand-mark { width: 22px; height: 22px; border-radius: 6px; background: conic-gradient(from 45deg, var(--buyer), var(--arbiter), var(--merchant), var(--buyer)); display: inline-block; flex-shrink: 0; }
+  .version-pill { display: inline-block; font-family: 'JetBrains Mono',monospace; font-size: 0.68rem; padding: 0.1rem 0.42rem; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 999px; font-weight: 500; }
+  .nav-tabs { display: flex; gap: 1.35rem; font-size: 0.86rem; }
+  .nav-tabs a { color: var(--text-secondary); padding: 0.3rem 0; position: relative; }
+  .nav-tabs a:hover { color: var(--text); text-decoration: none; }
+  .nav-tabs a.current { color: var(--text); }
+  .nav-tabs a.current::after { content: ''; position: absolute; bottom: -0.75rem; left: 0; right: 0; height: 2px; background: var(--accent); }
+  .topnav-spacer { flex: 1; }
+  .topnav-right { display: flex; align-items: center; gap: 0.75rem; }
+  .search { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.7rem 0.4rem 0.8rem; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 8px; color: var(--text-dim); font-size: 0.82rem; min-width: 260px; cursor: pointer; }
+  .search:hover { border-color: var(--border-strong); }
+  .search kbd { margin-left: auto; font-family: 'JetBrains Mono',monospace; font-size: 0.7rem; padding: 0.06rem 0.36rem; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; color: var(--text-faint); }
+  .nav-link { font-size: 0.86rem; color: var(--text-secondary); }
+  .nav-link:hover { color: var(--text); text-decoration: none; }
+  .icon-btn { width: 32px; height: 32px; background: transparent; border: 1px solid transparent; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-dim); font-size: 0.95rem; transition: all 0.12s; }
+  .icon-btn:hover { border-color: var(--border); color: var(--text); background: var(--bg-subtle); }
+  [data-theme="light"] .icon-btn .moon { display: inline; }
+  [data-theme="light"] .icon-btn .sun { display: none; }
+  [data-theme="dark"] .icon-btn .moon { display: none; }
+  [data-theme="dark"] .icon-btn .sun { display: inline; }
+
+  .layout { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 240px minmax(0,1fr) 200px; gap: 2.5rem; padding: 0 1.5rem; }
+
+  .sidebar { position: sticky; top: 3.5rem; height: calc(100vh - 3.5rem); overflow-y: auto; padding: 1.5rem 0 3rem; font-size: 0.85rem; }
+  .sidebar-section { margin-bottom: 1.5rem; }
+  .sidebar-heading { font-size: 0.82rem; font-weight: 600; color: var(--text); padding: 0 0.75rem; margin-bottom: 0.35rem; }
+  .sidebar-link { display: block; padding: 0.32rem 0.75rem; color: var(--text-dim); border-radius: 6px; font-size: 0.84rem; line-height: 1.4; cursor: pointer; }
+  .sidebar-link:hover { color: var(--text); text-decoration: none; }
+  .sidebar-link.active { color: var(--accent); background: var(--accent-bg); font-weight: 500; }
+  .sidebar-link.external::after { content: ' ↗'; opacity: 0.5; font-size: 0.85em; }
+
+  main { min-width: 0; padding: 2rem 0 5rem; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .eyebrow { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.6rem; }
+  .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.1rem; }
+  main h1 { font-size: 2.1rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.18; color: var(--text); }
+  .page-actions { display: flex; gap: 0.4rem; margin-top: 0.35rem; flex-shrink: 0; }
+  .page-action { padding: 0.35rem 0.7rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .page-action:hover { border-color: var(--border-strong); color: var(--text); background: var(--bg-subtle); }
+  .lede { font-size: 1.02rem; color: var(--text-secondary); line-height: 1.65; margin-bottom: 1.75rem; max-width: 780px; }
+  main h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.015em; margin-top: 2.5rem; margin-bottom: 0.75rem; line-height: 1.25; color: var(--text); scroll-margin-top: 4rem; }
+  main h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; margin-top: 1.6rem; margin-bottom: 0.5rem; color: var(--text); }
+  main p { color: var(--text-secondary); margin-bottom: 0.9rem; line-height: 1.7; }
+  main p strong { color: var(--text); font-weight: 600; }
+  main ul, main ol { margin: 0.4rem 0 0.95rem 1.25rem; }
+  main li { color: var(--text-secondary); margin-bottom: 0.35rem; line-height: 1.6; }
+  main li strong { color: var(--text); font-weight: 600; }
+
+  .frame { background: var(--bg-frame); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem; margin: 1.5rem 0; }
+  .setup-row { display: flex; align-items: center; gap: 0.85rem; padding: 0.8rem 1rem; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 0.75rem; font-size: 0.85rem; }
+  .setup-icon-circle { width: 30px; height: 30px; border-radius: 50%; background: var(--bg-subtle); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .setup-text { color: var(--text); }
+  .setup-text .who { font-weight: 600; }
+  .setup-text em { color: var(--text-dim); font-style: italic; }
+  .chat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.6rem; }
+  .agent { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+  .agent-head { padding: 0.8rem 0.85rem 0.7rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.55rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .agent.buyer .dot { background: var(--buyer); }
+  .agent.arbiter .dot { background: var(--arbiter); }
+  .agent.merchant .dot { background: var(--merchant); }
+  .agent-name { font-size: 0.84rem; font-weight: 600; color: var(--text); }
+  .agent-role-label { font-family: 'JetBrains Mono',monospace; font-size: 0.62rem; color: var(--text-faint); letter-spacing: 0.02em; margin-top: 0.1rem; }
+  .vault { margin: 0.7rem 0.7rem 0.35rem; padding: 0.65rem 0.75rem; border-radius: 8px; background: var(--vault-bg); border: 1px solid var(--vault-border); }
+  .agent.arbiter .vault { background: var(--arbiter-bg); border-color: var(--arbiter-border); }
+  .vault-label { display: flex; align-items: center; gap: 0.3rem; font-family: 'JetBrains Mono',monospace; font-size: 0.6rem; letter-spacing: 0.11em; text-transform: uppercase; margin-bottom: 0.5rem; color: var(--vault-label); font-weight: 500; }
+  .agent.arbiter .vault-label { color: var(--arbiter); }
+  .vault-rows { display: flex; flex-direction: column; gap: 0.28rem; }
+  .vault-row { display: flex; justify-content: space-between; font-size: 0.72rem; }
+  .vault-row .k { color: var(--text-dim); }
+  .vault-row .v { font-family: 'JetBrains Mono',monospace; color: var(--text); font-weight: 500; }
+  .vault-note { font-size: 0.64rem; color: var(--text-dim); opacity: 0.8; margin-top: 0.5rem; padding-top: 0.4rem; border-top: 1px dashed var(--vault-border); font-style: italic; }
+  .messages { padding: 0 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; }
+  .msg { border-radius: 8px; padding: 0.5rem 0.65rem; font-size: 0.73rem; line-height: 1.45; }
+  .msg.out { background: var(--buyer-bg); border: 1px solid var(--buyer-border); color: var(--text); }
+  .agent.arbiter .msg.out { background: var(--arbiter-bg); border-color: var(--arbiter-border); }
+  .agent.merchant .msg.out { background: var(--merchant-bg); border-color: var(--merchant-border); }
+  .msg.in { background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-dim); }
+  .msg.verdict { background: var(--arbiter-bg); border: 1px solid var(--arbiter-border); color: var(--text); }
+  .msg.commit { background: var(--arbiter-bg); border: 1px dashed var(--arbiter-border); color: var(--arbiter); font-family: 'JetBrains Mono',monospace; }
+  .msg-type { font-family: 'JetBrains Mono',monospace; font-size: 0.58rem; opacity: 0.7; letter-spacing: 0.02em; margin-bottom: 0.1rem; display: block; }
+  .msg-body { color: var(--text); }
+  .msg.in .msg-body { color: var(--text-dim); }
+  .msg.commit .msg-body { color: var(--arbiter); }
+  .msg strong { color: var(--arbiter); font-weight: 600; }
+  .msg code { font-size: 0.86em; padding: 0 0.28rem; }
+  .round-marker { font-family: 'JetBrains Mono',monospace; font-size: 0.56rem; color: var(--text-faint); letter-spacing: 0.15em; text-transform: uppercase; display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0 0.05rem; }
+  .round-marker::before, .round-marker::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .msg-system { background: var(--bg-subtle); color: var(--text-dim); font-size: 0.68rem; font-style: italic; text-align: center; padding: 0.5rem; border: 1px dashed var(--border); border-radius: 8px; line-height: 1.4; }
+  .outcome-bar { margin-top: 0.8rem; padding: 0.85rem 1.05rem; background: var(--merchant-bg); border: 1px solid var(--merchant-border); border-radius: 10px; display: flex; align-items: center; gap: 0.8rem; font-size: 0.86rem; }
+  .outcome-check { width: 26px; height: 26px; border-radius: 50%; background: var(--merchant); color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.82rem; }
+  .outcome-bar .text { color: var(--text); line-height: 1.5; }
+  .outcome-bar strong { color: var(--merchant); font-weight: 600; }
+
+  .callout { margin: 1.25rem 0; padding: 0.85rem 1.05rem; background: var(--callout-bg); border-left: 3px solid var(--callout-border); border-radius: 4px; font-size: 0.9rem; }
+  .callout-title { font-weight: 600; color: var(--callout-text); margin-bottom: 0.2rem; }
+  .callout p { margin: 0; color: var(--callout-text); line-height: 1.6; }
+
+  .card-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1.2rem 0; }
+  .card { padding: 1rem 1rem 0.95rem; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; transition: all 0.12s; cursor: pointer; display: block; }
+  .card:hover { border-color: var(--border-strong); background: var(--bg-subtle); text-decoration: none; }
+  .card-icon { width: 26px; height: 26px; border-radius: 6px; background: var(--bg-subtle); border: 1px solid var(--border); color: var(--text-dim); display: flex; align-items: center; justify-content: center; margin-bottom: 0.55rem; font-size: 0.88rem; }
+  .card h3 { font-size: 0.94rem; font-weight: 600; margin: 0 0 0.18rem !important; color: var(--text); }
+  .card p { font-size: 0.82rem; color: var(--text-dim); margin: 0 !important; line-height: 1.5; }
+
+  .feedback { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 0.85rem; font-size: 0.88rem; color: var(--text-dim); }
+  .feedback-btn { padding: 0.35rem 0.8rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 0.82rem; cursor: pointer; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.3rem; }
+  .feedback-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .feedback-btn.chosen { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+  .next-page { margin-top: 2rem; padding: 0.85rem 1rem; border: 1px solid var(--border); border-radius: 10px; display: flex; justify-content: flex-end; align-items: center; gap: 0.85rem; cursor: pointer; transition: all 0.12s; }
+  .next-page:hover { border-color: var(--border-strong); text-decoration: none; background: var(--bg-subtle); }
+  .next-page .label { font-size: 0.72rem; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+  .next-page .title { font-size: 0.92rem; font-weight: 600; color: var(--text); }
+
+  .toc { position: sticky; top: 3.5rem; height: calc(100vh - 3.5rem); overflow-y: auto; padding: 2.5rem 0; font-size: 0.82rem; }
+  .toc-heading { font-size: 0.74rem; font-weight: 600; color: var(--text); margin-bottom: 0.65rem; }
+  .toc a { display: block; padding: 0.28rem 0; color: var(--text-dim); line-height: 1.4; font-size: 0.83rem; }
+  .toc a:hover { color: var(--text); text-decoration: none; }
+  .toc a.active { color: var(--accent); }
+
+  .page-footer { max-width: 1400px; margin: 3rem auto 0; padding: 2.5rem 1.5rem 2rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--text-faint); text-align: center; }
+
+  .invariants-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+  .invariants-table th, .invariants-table td { padding: 0.7rem 0.85rem; text-align: left; border-bottom: 1px solid var(--border); }
+  .invariants-table th { font-weight: 600; color: var(--text); background: var(--bg-subtle); font-size: 0.78rem; letter-spacing: 0.02em; }
+  .invariants-table tr:last-child td { border-bottom: none; }
+  .invariants-table code { font-size: 0.82em; }
+
+  pre { background: var(--bg-code); border: 1px solid var(--border); border-radius: 8px; padding: 0.95rem 1.05rem; overflow-x: auto; font-family: 'JetBrains Mono',monospace; font-size: 0.84rem; line-height: 1.55; margin: 1rem 0; color: var(--text); }
+
+  .coming-soon { margin: 2rem 0; padding: 2rem; background: var(--bg-subtle); border: 1px dashed var(--border-strong); border-radius: 12px; text-align: center; }
+  .coming-soon-title { font-size: 1.1rem; font-weight: 600; color: var(--text); margin-bottom: 0.4rem; }
+  .coming-soon-body { color: var(--text-dim); font-size: 0.92rem; max-width: 500px; margin: 0 auto; }
+
+  .btn-spec { display: inline-block; padding: 0.5rem 0.85rem; background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); border-radius: 8px; font-weight: 500; text-decoration: none; }
+  .btn-spec:hover { text-decoration: none; background: var(--bg-subtle); }
+
+  @media (max-width: 1100px) { .layout { grid-template-columns: 220px 1fr; } .toc { display: none; } .nav-tabs { display: none; } .search { min-width: 180px; } }
+  @media (max-width: 768px) { .layout { grid-template-columns: 1fr; padding: 0 1rem; } .sidebar { display: none; } .chat-grid { grid-template-columns: 1fr; } .card-group { grid-template-columns: 1fr; } .search { min-width: 100px; } main h1 { font-size: 1.6rem; } .page-head { flex-direction: column; } }
 </style>
 </head>
 <body>
-<header>
-  <h1><span class="brand">OANP</span> — Open Agent Negotiation Protocol</h1>
-  <div class="status"><span class="dot"></span>v0.1 draft · publishing 2026-04-22</div>
-</header>
 
-<p class="lede">An open protocol for fair negotiation between AI agents in commerce.</p>
+<div class="topnav">
+  <div class="topnav-inner">
+    <div class="brand" data-page="intro">
+      <span class="brand-mark"></span>
+      OANP
+      <span class="version-pill">v0.1</span>
+    </div>
+    <div class="nav-tabs">
+      <a class="current" data-page="intro">Documentation</a>
+      <a data-page="message-format">Specification</a>
+      <a href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener">Reference</a>
+      <a href="https://github.com/oanp-protocol" target="_blank" rel="noopener">Community</a>
+    </div>
+    <div class="topnav-spacer"></div>
+    <div class="topnav-right">
+      <div class="search" id="search-btn">
+        <span>🔍</span>
+        <span>Search or ask…</span>
+        <kbd>⌘K</kbd>
+      </div>
+      <a class="nav-link" id="blog-link">Blog</a>
+      <a class="nav-link" href="https://github.com/oanp-protocol" target="_blank" rel="noopener">GitHub</a>
+      <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+        <span class="moon">☾</span>
+        <span class="sun">☀</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-<h2>The gap</h2>
-<p>MCP, ACP, and UCP solve discovery and payment for agentic commerce. When a buyer agent negotiates with a merchant agent, there is no protocol-level guarantee that the stronger model doesn't systematically exploit the weaker one.</p>
-<p>OANP specifies a three-party flow — <strong>buyer</strong>, <strong>arbiter</strong>, <strong>merchant</strong> — with seven mechanically checkable fairness invariants and a signed final agreement. It's designed to extend existing stacks, not replace them.</p>
+<div class="layout">
 
-<h2>Designed to coexist</h2>
-<ul>
-  <li><span class="label">MCP</span> Anthropic — discovery</li>
-  <li><span class="label">ACP</span> OpenAI + Stripe — payment</li>
-  <li><span class="label">UCP</span> Google — commerce envelope</li>
-  <li><span class="label">A2A</span> Google — transport</li>
-  <li><span class="label">OANP</span> — fairness layer between discovery and payment</li>
-</ul>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Get started</div>
+      <a class="sidebar-link" data-page="intro">What is OANP?</a>
+      <a class="sidebar-link" data-page="three-role-model">The three-role model</a>
+      <a class="sidebar-link" data-page="first-session">Your first session</a>
+      <a class="sidebar-link" data-page="quickstart">Quickstart: flight</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">About OANP</div>
+      <a class="sidebar-link" data-page="architecture">Architecture</a>
+      <a class="sidebar-link" data-page="roles">Roles &amp; responsibilities</a>
+      <a class="sidebar-link" data-page="commitments">Commitments &amp; privacy</a>
+      <a class="sidebar-link" data-page="state-machine">Session state machine</a>
+      <a class="sidebar-link" data-page="versioning">Versioning</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Build with OANP</div>
+      <a class="sidebar-link" data-page="build-buyer">Build a Buyer Agent</a>
+      <a class="sidebar-link" data-page="build-merchant">Build a Merchant Agent</a>
+      <a class="sidebar-link" data-page="run-arbiter">Run an Arbiter</a>
+      <a class="sidebar-link" data-page="coexistence">Coexistence: MCP, ACP</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Specification</div>
+      <a class="sidebar-link" data-page="message-format">v0.1 Message format</a>
+      <a class="sidebar-link" data-page="arbitration-flow">v0.1 Arbitration flow</a>
+      <a class="sidebar-link" data-page="fairness-invariants">v0.1 Fairness invariants</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-heading">Developer tools</div>
+      <a class="sidebar-link" data-page="conformance">Conformance checklist</a>
+      <a class="sidebar-link external" href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener">Reference impl</a>
+      <a class="sidebar-link external" href="https://github.com/oanp-protocol/spec/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+    </div>
+  </aside>
 
-<h2>Status</h2>
-<p>v0.1 draft is under review at <a href="https://github.com/oanp-protocol/spec/pull/1">oanp-protocol/spec#1</a>. Final publication is targeted for <strong>April 22, 2026</strong>. A reference implementation maintained by <a href="https://valyzen.com">Valyzen</a> is mapped at <a href="https://github.com/oanp-protocol/reference">oanp-protocol/reference</a>.</p>
+  <main id="main">
 
-<h2>Repositories</h2>
-<ul>
-  <li><span class="label">spec</span> <a href="https://github.com/oanp-protocol/spec">github.com/oanp-protocol/spec</a></li>
-  <li><span class="label">reference</span> <a href="https://github.com/oanp-protocol/reference">github.com/oanp-protocol/reference</a></li>
-  <li><span class="label">org</span> <a href="https://github.com/oanp-protocol">github.com/oanp-protocol</a></li>
-</ul>
+    <article class="page active" data-page-id="intro">
+      <div class="eyebrow">Get started</div>
+      <div class="page-head">
+        <h1>What is the Open Agent Negotiation Protocol (OANP)?</h1>
+        <div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div>
+      </div>
+      <p class="lede">OANP is an open-source standard for fair, verifiable negotiation between AI agents. Using OANP, AI-driven buyers and merchants can reach agreement through a neutral arbiter that enforces the rules of engagement — without either side revealing its private information.</p>
+      <p>Think of OANP like <strong>Robert's Rules of Order</strong> for agent-to-agent commerce. Just as the rules provide a standardized way for a human assembly to reach fair decisions, OANP provides a standardized way for two agents to reach fair agreement — with a mechanically verifiable record of how the decision was made.</p>
 
-<h2>Follow</h2>
-<ul>
-  <li><span class="label">X / Twitter</span> <a href="https://x.com/oanpdev">@oanpdev</a></li>
-</ul>
+      <h2 id="example">A worked example</h2>
+      <p>The simplest way to understand OANP is to watch a session play out. Below is a full SFO → JFK flight negotiation between a Buyer Agent and a Merchant Agent, with a neutral Arbiter sitting between them.</p>
 
-<footer>
-  Apache 2.0. Open standard, open implementation.
-</footer>
+      <div class="frame">
+        <div class="setup-row">
+          <div class="setup-icon-circle">👤</div>
+          <div class="setup-text"><span class="who">User asks:</span> <em>"Book me SFO → JFK, April 28. Don't go over <code>$400</code>."</em> &nbsp;·&nbsp; Buyer Agent discovers United's Merchant Agent via <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP</a>. Both enter an OANP session.</div>
+        </div>
+        <div class="chat-grid">
+          <div class="agent buyer"><div class="agent-head"><div class="dot"></div><div><div class="agent-name">Buyer Agent</div><div class="agent-role-label">represents&nbsp;·&nbsp;user</div></div></div><div class="vault"><div class="vault-label">◉ private vault</div><div class="vault-rows"><div class="vault-row"><span class="k">budget cap</span><span class="v">$400</span></div><div class="vault-row"><span class="k">true ceiling</span><span class="v">$420</span></div><div class="vault-row"><span class="k">urgency</span><span class="v">medium</span></div><div class="vault-row"><span class="k">seat pref</span><span class="v">aisle</span></div></div><div class="vault-note">never leaves this column</div></div><div class="messages"><div class="msg commit"><span class="msg-type">→ session.open</span><span class="msg-body">commit: <code>0x8f3a…</code></span></div><div class="round-marker"><span>round 1</span></div><div class="msg out"><span class="msg-type">→ offer.propose</span><span class="msg-body">I'll pay <code>$320</code></span></div><div class="msg in"><span class="msg-type">← via arbiter</span><span class="msg-body">counter <code>$370</code></span></div><div class="round-marker"><span>round 2</span></div><div class="msg out"><span class="msg-type">→ offer.propose</span><span class="msg-body">how about <code>$340</code>?</span></div><div class="msg in"><span class="msg-type">← via arbiter</span><span class="msg-body">accept <code>$340</code></span></div><div class="msg verdict"><span class="msg-type">← session.agree</span><span class="msg-body">JWS signed · routed to ACP</span></div></div></div>
+          <div class="agent arbiter"><div class="agent-head"><div class="dot"></div><div><div class="agent-name">Arbiter</div><div class="agent-role-label">judges&nbsp;·&nbsp;rules, not secrets</div></div></div><div class="vault"><div class="vault-label">◈ what arbiter holds</div><div class="vault-rows"><div class="vault-row"><span class="k">buyer commit</span><span class="v">0x8f3a…</span></div><div class="vault-row"><span class="k">merchant commit</span><span class="v">0xb91d…</span></div><div class="vault-row"><span class="k">max rounds</span><span class="v">5</span></div><div class="vault-row"><span class="k">invariants</span><span class="v">I1–I7</span></div></div><div class="vault-note">no values, just hashes</div></div><div class="messages"><div class="msg-system">Both commitments locked. Drift detectable (I3).</div><div class="round-marker"><span>round 1</span></div><div class="msg in"><span class="msg-type">observing</span><span class="msg-body">B→M <code>$320</code>; M→B <code>$370</code></span></div><div class="msg verdict"><span class="msg-type">→ round.verdict</span><span class="msg-body">moves consistent · <strong>fair — proceed</strong></span></div><div class="round-marker"><span>round 2</span></div><div class="msg in"><span class="msg-type">observing</span><span class="msg-body">B <code>$340</code> (concession ✓); M accept</span></div><div class="msg verdict"><span class="msg-type">→ session.agree · JWS</span><span class="msg-body">all 7 invariants satisfied · <strong>signing</strong></span></div></div></div>
+          <div class="agent merchant"><div class="agent-head"><div class="dot"></div><div><div class="agent-name">Merchant Agent</div><div class="agent-role-label">represents&nbsp;·&nbsp;United</div></div></div><div class="vault"><div class="vault-label">◉ private vault</div><div class="vault-rows"><div class="vault-row"><span class="k">floor price</span><span class="v">$280</span></div><div class="vault-row"><span class="k">occupancy</span><span class="v">68%</span></div><div class="vault-row"><span class="k">strategy</span><span class="v">v2</span></div><div class="vault-row"><span class="k">max rounds</span><span class="v">5</span></div></div><div class="vault-note">never leaves this column</div></div><div class="messages"><div class="msg commit"><span class="msg-type">→ session.ack</span><span class="msg-body">commit: <code>0xb91d…</code></span></div><div class="round-marker"><span>round 1</span></div><div class="msg in"><span class="msg-type">← via arbiter</span><span class="msg-body">propose <code>$320</code></span></div><div class="msg out"><span class="msg-type">→ offer.counter</span><span class="msg-body">counter at <code>$370</code></span></div><div class="round-marker"><span>round 2</span></div><div class="msg in"><span class="msg-type">← via arbiter</span><span class="msg-body">propose <code>$340</code></span></div><div class="msg out"><span class="msg-type">→ offer.accept</span><span class="msg-body">accept <code>$340</code></span></div><div class="msg verdict"><span class="msg-type">← session.agree</span><span class="msg-body">JWS signed · ready for ACP charge</span></div></div></div>
+        </div>
+        <div class="outcome-bar"><div class="outcome-check">✓</div><div class="text"><strong>Settled at $340</strong> in 2 rounds. Buyer's true ceiling (<code>$420</code>) and Merchant's floor (<code>$280</code>) never left their vaults. Signed artifact hands off to <code>ACP checkout_session.create</code>.</div></div>
+      </div>
+
+      <div class="callout"><div class="callout-title">Key insight</div><p>Neither the buyer, the merchant, nor the arbiter ever sees the other side's secrets — but every participant (and any auditor afterwards) can verify the session was fair.</p></div>
+
+      <h2 id="why">Why does OANP matter?</h2>
+      <p>Agent commerce already has protocols for <strong>discovery</strong> (<a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP</a>, <a data-page="coexistence">UCP</a>) and <strong>payment</strong> (<a href="https://agenticcommerce.dev/" target="_blank" rel="noopener">ACP</a>, TAP, Agent Pay). What's been missing is the middle step: <strong>how two agents reach agreement</strong> when there's something to negotiate.</p>
+      <ul>
+        <li><strong>For developers:</strong> a single, open protocol — your agents can negotiate with any conformant counterparty.</li>
+        <li><strong>For platforms &amp; merchants:</strong> deploy a Merchant Agent that a neutral arbiter validates — no proprietary trust relationships required.</li>
+        <li><strong>For end users:</strong> negotiations your agent runs on your behalf are provably fair, with a signed audit trail.</li>
+      </ul>
+
+      <h2 id="start">Start Building</h2>
+      <div class="card-group">
+        <a class="card" data-page="message-format"><div class="card-icon">📖</div><h3>Read the spec</h3><p>Message format, arbitration flow, and the seven fairness invariants.</p></a>
+        <a class="card" data-page="build-buyer"><div class="card-icon">🔌</div><h3>Build an agent</h3><p>Implement a Buyer, Arbiter, or Merchant agent against v0.1.</p></a>
+        <a class="card" href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener"><div class="card-icon">🧪</div><h3>Reference impl</h3><p>See how Valyzen maps flight negotiation onto OANP roles.</p></a>
+        <a class="card" data-page="run-arbiter"><div class="card-icon">⚖️</div><h3>Run an arbiter</h3><p>Host a neutral arbiter for your marketplace or consortium.</p></a>
+      </div>
+
+      <div class="feedback"><span>Was this page helpful?</span><button class="feedback-btn" data-fb="yes">👍 Yes</button><button class="feedback-btn" data-fb="no">👎 No</button></div>
+      <a class="next-page" data-page="three-role-model"><div><div class="label">Next</div><div class="title">The three-role model →</div></div></a>
+    </article>
+
+    <article class="page" data-page-id="three-role-model">
+      <div class="eyebrow">Get started</div>
+      <div class="page-head"><h1>The three-role model</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">Every OANP session has exactly three roles — Buyer, Arbiter, and Merchant. Each role has a distinct purpose and a distinct trust boundary. No role can be merged with another within a session.</p>
+      <h2>The roles</h2>
+      <p><strong>Buyer Agent.</strong> Represents the party wishing to acquire an item or service. Holds the user's constraints and preferences privately. Sends <code>session.open</code>, <code>offer.propose</code>, and ultimately receives the signed agreement.</p>
+      <p><strong>Merchant Agent.</strong> Represents the party offering the item or service. Holds internal floor prices, policy constraints, and inventory status privately. Sends <code>session.ack</code>, <code>offer.counter</code>, and <code>offer.accept</code>.</p>
+      <p><strong>Arbiter.</strong> Structurally neutral. Does not represent either party. Observes every message, verifies it against the session's committed rules, and emits a <code>round.verdict</code> per round. Signs the final <code>session.agree</code> artifact when all invariants are satisfied.</p>
+      <div class="callout"><div class="callout-title">Neutrality, not anonymity</div><p>The arbiter is known to both parties at session open — but its rules are mechanically checkable, which means its neutrality is verifiable, not assumed.</p></div>
+      <h2>Who can be an arbiter?</h2>
+      <p>OANP defines the arbiter as a <em>role</em>, not a vendor. Any party can fulfill the role provided they commit to the seven invariants and emit verdicts that match the session log. Expected operators:</p>
+      <ul>
+        <li><strong>Platforms</strong> that want to certify their own marketplace is fair.</li>
+        <li><strong>Independent non-profits</strong> (e.g. consumer protection orgs).</li>
+        <li><strong>Merchant consortiums</strong> running shared arbiters to reduce overhead.</li>
+        <li><strong>Specialized arbiter startups</strong> whose value prop is neutrality itself.</li>
+      </ul>
+      <p>The pattern is the same as TLS certificate authorities or DNS resolvers: multiple implementations, one protocol, one set of rules.</p>
+      <div class="feedback"><span>Was this page helpful?</span><button class="feedback-btn" data-fb="yes">👍 Yes</button><button class="feedback-btn" data-fb="no">👎 No</button></div>
+      <a class="next-page" data-page="commitments"><div><div class="label">Next</div><div class="title">Commitments &amp; privacy →</div></div></a>
+    </article>
+
+    <article class="page" data-page-id="commitments">
+      <div class="eyebrow">About OANP</div>
+      <div class="page-head"><h1>Commitments &amp; privacy</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">OANP is built on a simple privacy guarantee: neither the buyer, nor the merchant, nor the arbiter ever sees the other side's private constraints. What crosses boundaries are hash commitments, public offers, and the arbiter's verdicts.</p>
+      <h2>Three vaults, one session</h2>
+      <p>At session open, each agent computes a cryptographic commitment to its private constraints and sends that commitment to the arbiter. The constraint values themselves never leave the agent's own process. The arbiter stores only the hashes.</p>
+      <pre>session.open {
+  role: "buyer",
+  session_id: "01HXYZ...",
+  constraints_commit: "0x8f3a...",  ← hash only
+}</pre>
+      <p>If either side tries to change its constraints mid-session — say a merchant raising its floor after seeing the buyer's first offer — the next message will not verify against the original commitment. Invariant <strong>I3 (constraint immutability)</strong> catches it.</p>
+      <h2>What the arbiter sees</h2>
+      <ul>
+        <li>Both parties' hash commitments at session open.</li>
+        <li>Every <code>offer.propose</code>, <code>offer.counter</code>, and <code>offer.accept</code> passing between them.</li>
+        <li>The public parts of each round — quoted prices, accepted terms, concession direction.</li>
+        <li>The arbiter's own emitted verdicts, signed into the session log.</li>
+      </ul>
+      <h2>What the arbiter does <em>not</em> see</h2>
+      <ul>
+        <li>The buyer's true ceiling or budget.</li>
+        <li>The merchant's floor price or pricing strategy.</li>
+        <li>Either side's internal reasoning, utility weights, or alternative options.</li>
+        <li>Either side's commitment plaintext (only the hash).</li>
+      </ul>
+      <div class="callout"><div class="callout-title">Fairness without full visibility</div><p>The arbiter's job is to judge whether both sides <em>played by the rules</em> — not whether either side is getting a good deal. Those are different questions, and OANP intentionally scopes the arbiter to the first one.</p></div>
+      <a class="next-page" data-page="fairness-invariants"><div><div class="label">Next</div><div class="title">Fairness invariants →</div></div></a>
+    </article>
+
+    <article class="page" data-page-id="fairness-invariants">
+      <div class="eyebrow">Specification</div>
+      <div class="page-head"><h1>v0.1 Fairness invariants</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">Seven MUST invariants (I1–I7) that every conformant OANP session satisfies. Each invariant is stated in a form that is mechanically checkable from the session's message log, which means compliance is verifiable, not assumed.</p>
+      <table class="invariants-table">
+        <thead><tr><th>ID</th><th>Invariant</th><th>Checked how</th></tr></thead>
+        <tbody>
+          <tr><td><code>I1</code></td><td>Bounded rounds</td><td>Session closes at or before the max_rounds declared at open.</td></tr>
+          <tr><td><code>I2</code></td><td>Symmetric information to arbiter</td><td>Both parties send the arbiter the same kinds of messages at each turn. No side channels.</td></tr>
+          <tr><td><code>I3</code></td><td>Constraint immutability</td><td>Neither party's constraint commitment changes within a session.</td></tr>
+          <tr><td><code>I4</code></td><td>Monotonic concession</td><td>Each party's successive offers move toward agreement (no reneging).</td></tr>
+          <tr><td><code>I5</code></td><td>Per-round verdict</td><td>The arbiter emits a <code>round.verdict</code> for every completed round.</td></tr>
+          <tr><td><code>I6</code></td><td>Signed final artifact</td><td>The <code>session.agree</code> message is a JWS over a canonicalized final-state digest.</td></tr>
+          <tr><td><code>I7</code></td><td>Auditable history</td><td>The full message log is reproducible and hashable to the signed final artifact.</td></tr>
+        </tbody>
+      </table>
+      <h2>Default profile</h2>
+      <p>v0.1 ships with a default fairness profile, <code>default/v0.1</code>, that specifies how an arbiter decides whether a round's moves are "within bounds". Profiles are pluggable — a session can negotiate a different profile at open — but any profile MUST still enforce I1–I7.</p>
+      <a class="next-page" data-page="message-format"><div><div class="label">Next</div><div class="title">Message format →</div></div></a>
+    </article>
+
+    <article class="page" data-page-id="message-format">
+      <div class="eyebrow">Specification</div>
+      <div class="page-head"><h1>v0.1 Message format</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">OANP messages are plain JSON with a <code>type</code> discriminator. Seven message types cover the full session lifecycle. JWS detached signatures are required only on the final <code>session.agree</code> artifact.</p>
+      <h2>Envelope</h2>
+      <pre>{
+  "oanp_version": "0.1",
+  "message_id": "01HXYZ...",
+  "session_id": "01HXYW...",
+  "timestamp": "2026-04-22T00:00:00Z",
+  "sender": { "role": "buyer" | "merchant" | "arbiter", "agent_id": "..." },
+  "type": "<message type>",
+  "payload": { ... }
+}</pre>
+      <h2>Message types</h2>
+      <ol>
+        <li><code>session.open</code> — buyer initiates; includes constraint commitment</li>
+        <li><code>session.ack</code> — merchant acknowledges; includes their commitment</li>
+        <li><code>offer.propose</code> — any side proposes an offer value</li>
+        <li><code>offer.counter</code> — counter-offer from the opposite side</li>
+        <li><code>offer.accept</code> — either side accepts the standing offer</li>
+        <li><code>round.verdict</code> — arbiter emits fairness verdict per round</li>
+        <li><code>session.agree</code> — JWS-signed final artifact</li>
+      </ol>
+      <a href="https://github.com/oanp-protocol/spec/blob/main/spec/v0.1/message-format.md" target="_blank" rel="noopener" class="btn-spec">Read the full specification on GitHub</a>
+      <a class="next-page" data-page="arbitration-flow"><div><div class="label">Next</div><div class="title">Arbitration flow →</div></div></a>
+    </article>
+
+    <article class="page" data-page-id="coexistence">
+      <div class="eyebrow">Build with OANP</div>
+      <div class="page-head"><h1>Coexistence: MCP, ACP, UCP</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">OANP is designed to coexist with the existing agent commerce stack, not replace it. It fills the middle phase — negotiation — between discovery (MCP / UCP) and payment (ACP / TAP).</p>
+      <h2>The three phases of agent commerce</h2>
+      <ol>
+        <li><strong>Discovery</strong> — a buyer agent finds merchants it might want to transact with. Handled by <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">MCP</a>, UCP, <a href="https://a2aproject.github.io/A2A/" target="_blank" rel="noopener">A2A</a>.</li>
+        <li><strong>Negotiation</strong> — the parties agree on terms. Handled by <strong>OANP</strong>.</li>
+        <li><strong>Payment</strong> — the deal is settled. Handled by <a href="https://agenticcommerce.dev/" target="_blank" rel="noopener">ACP</a>, TAP, Agent Pay.</li>
+      </ol>
+      <h2>How OANP carries inside other protocols</h2>
+      <p>Any transport that can carry a JSON object can carry an OANP session. Reference transports in v0.1:</p>
+      <ul>
+        <li><strong>MCP tool call</strong>: OANP messages travel as the body of an MCP tool invocation. Recipients parse the envelope's <code>type</code> field.</li>
+        <li><strong>HTTPS POST</strong>: synchronous request/response between agents.</li>
+        <li><strong>Server-sent events</strong>: arbiter streams verdicts to both parties.</li>
+      </ul>
+      <h2>Handoff to ACP</h2>
+      <p>A signed <code>session.agree</code> artifact is structured so its digest slots cleanly into <code>checkout_session.create</code> metadata. That means an ACP-compatible payment processor can verify the negotiated terms before charging.</p>
+      <a class="next-page" data-page="quickstart"><div><div class="label">Next</div><div class="title">Quickstart: flight →</div></div></a>
+    </article>
+
+    <article class="page" data-page-id="first-session"><div class="eyebrow">Get started</div><div class="page-head"><h1>Your first session</h1></div><div class="coming-soon"><div class="coming-soon-title">Full walkthrough coming with v0.1.1</div><div class="coming-soon-body">In the meantime, see the <a data-page="quickstart">flight quickstart</a> or the <a data-page="intro">worked example on the intro page</a>.</div></div></article>
+    <article class="page" data-page-id="quickstart"><div class="eyebrow">Get started</div><div class="page-head"><h1>Quickstart: flight negotiation</h1></div><p class="lede">A copy-paste walkthrough of the SFO → JFK example, with real JSON envelopes you can paste into your agent. In the meantime, the <a data-page="intro">intro page</a> shows the full session visually.</p><div class="coming-soon"><div class="coming-soon-title">Code samples coming with the Apr 22 release</div><div class="coming-soon-body">Samples for Buyer, Arbiter, and Merchant agents in Python + TypeScript, integration tests, and a running arbiter endpoint.</div></div></article>
+    <article class="page" data-page-id="architecture"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Architecture</h1></div><p class="lede">For the conceptual overview, see <a data-page="three-role-model">the three-role model</a> and <a data-page="commitments">commitments &amp; privacy</a>.</p><div class="coming-soon"><div class="coming-soon-title">Diagrams coming with the Apr 22 release</div></div></article>
+    <article class="page" data-page-id="roles"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Roles &amp; responsibilities</h1></div><p class="lede">See <a data-page="three-role-model">the three-role model</a> for the full breakdown of Buyer, Arbiter, and Merchant responsibilities.</p></article>
+    <article class="page" data-page-id="state-machine"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Session state machine</h1></div><p class="lede">OANP sessions move through four states: <code>OPENING → NEGOTIATING → EVALUATING → AGREED | CLOSED</code>.</p><div class="coming-soon"><div class="coming-soon-title">Full state-transition diagram coming with v0.1.1</div></div></article>
+    <article class="page" data-page-id="versioning"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Versioning</h1></div><p class="lede">OANP uses SemVer. v0.1 is the initial draft; v0.2 will add multi-merchant sessions and richer fairness profiles.</p></article>
+    <article class="page" data-page-id="build-buyer"><div class="eyebrow">Build with OANP</div><div class="page-head"><h1>Build a Buyer Agent</h1></div><p class="lede">A Buyer Agent opens a session, proposes offers, and receives a signed agreement.</p><div class="coming-soon"><div class="coming-soon-title">Starter kit shipping Apr 22</div><div class="coming-soon-body">Python and TypeScript templates will land with the launch. Source will be at <a href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener">oanp-protocol/reference</a>.</div></div></article>
+    <article class="page" data-page-id="build-merchant"><div class="eyebrow">Build with OANP</div><div class="page-head"><h1>Build a Merchant Agent</h1></div><p class="lede">A Merchant Agent responds to session.open, counters offers, and accepts within its committed constraints.</p><div class="coming-soon"><div class="coming-soon-title">Starter kit shipping Apr 22</div></div></article>
+    <article class="page" data-page-id="run-arbiter"><div class="eyebrow">Build with OANP</div><div class="page-head"><h1>Run an Arbiter</h1></div><p class="lede">An arbiter observes the session, emits round verdicts, and JWS-signs the final artifact.</p><div class="coming-soon"><div class="coming-soon-title">Reference arbiter shipping Apr 22</div></div></article>
+    <article class="page" data-page-id="arbitration-flow"><div class="eyebrow">Specification</div><div class="page-head"><h1>v0.1 Arbitration flow</h1></div><p class="lede">Full specification of the three-role state machine, the happy path, and fairness-violation recovery.</p><a href="https://github.com/oanp-protocol/spec/blob/main/spec/v0.1/arbitration-flow.md" target="_blank" rel="noopener" class="btn-spec">Read the full specification on GitHub</a></article>
+    <article class="page" data-page-id="conformance"><div class="eyebrow">Developer tools</div><div class="page-head"><h1>Conformance checklist</h1></div><p class="lede">Checklist for verifying an implementation complies with v0.1.</p><div class="coming-soon"><div class="coming-soon-title">Checklist shipping Apr 22</div></div></article>
+
+  </main>
+
+  <aside class="toc">
+    <div class="toc-heading">On this page</div>
+    <div id="toc-content"></div>
+  </aside>
+
+</div>
+
+<div class="page-footer">© Open Agent Negotiation Protocol · maintained by <a href="https://valyzen.com" target="_blank" rel="noopener">Valyzen</a> · Apache 2.0</div>
+
+<script>
+  const PAGES = {
+    'intro': { title: 'What is OANP?', toc: [['example','A worked example'],['why','Why does OANP matter?'],['start','Start Building']] },
+    'three-role-model': { title: 'The three-role model', toc: [] },
+    'first-session': { title: 'Your first session', toc: [] },
+    'quickstart': { title: 'Quickstart: flight', toc: [] },
+    'architecture': { title: 'Architecture', toc: [] },
+    'roles': { title: 'Roles & responsibilities', toc: [] },
+    'commitments': { title: 'Commitments & privacy', toc: [] },
+    'state-machine': { title: 'Session state machine', toc: [] },
+    'versioning': { title: 'Versioning', toc: [] },
+    'build-buyer': { title: 'Build a Buyer Agent', toc: [] },
+    'build-merchant': { title: 'Build a Merchant Agent', toc: [] },
+    'run-arbiter': { title: 'Run an Arbiter', toc: [] },
+    'coexistence': { title: 'Coexistence: MCP, ACP', toc: [] },
+    'message-format': { title: 'v0.1 Message format', toc: [] },
+    'arbitration-flow': { title: 'v0.1 Arbitration flow', toc: [] },
+    'fairness-invariants': { title: 'v0.1 Fairness invariants', toc: [] },
+    'conformance': { title: 'Conformance checklist', toc: [] },
+  };
+
+  function route(pageId) {
+    if (!PAGES[pageId]) pageId = 'intro';
+    document.querySelectorAll('.page').forEach(function(p) {
+      p.classList.toggle('active', p.dataset.pageId === pageId);
+    });
+    document.querySelectorAll('.sidebar-link[data-page]').forEach(function(l) {
+      l.classList.toggle('active', l.dataset.page === pageId);
+    });
+    const toc = document.getElementById('toc-content');
+    toc.textContent = '';
+    const page = PAGES[pageId];
+    (page.toc || []).forEach(function(entry) {
+      const a = document.createElement('a');
+      a.href = '#' + entry[0];
+      a.textContent = entry[1];
+      toc.appendChild(a);
+    });
+    if (window.location.hash !== '#' + pageId) {
+      history.replaceState(null, '', '#' + pageId);
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    document.title = page.title + ' — OANP';
+  }
+
+  document.addEventListener('click', function(e) {
+    const target = e.target.closest('[data-page]');
+    if (target && !target.hasAttribute('href')) {
+      e.preventDefault();
+      route(target.dataset.page);
+    }
+  });
+
+  window.addEventListener('hashchange', function() {
+    const p = (window.location.hash || '#intro').slice(1);
+    route(p);
+  });
+  route((window.location.hash || '#intro').slice(1));
+
+  document.getElementById('theme-toggle').addEventListener('click', function() {
+    const html = document.documentElement;
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-theme', next);
+    try { localStorage.setItem('oanp-theme', next); } catch(e) {}
+  });
+  try {
+    const saved = localStorage.getItem('oanp-theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+  } catch(e) {}
+
+  document.getElementById('search-btn').addEventListener('click', function() {
+    alert('Search coming soon — use ⌘F to find on page for now.');
+  });
+  document.getElementById('blog-link').addEventListener('click', function(e) {
+    e.preventDefault();
+    alert('Blog coming with the Apr 22 launch.');
+  });
+
+  document.querySelectorAll('.copy-page').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const active = document.querySelector('.page.active');
+      const text = active ? active.innerText : '';
+      if (!navigator.clipboard) { alert('Clipboard not available.'); return; }
+      navigator.clipboard.writeText(text).then(function() {
+        const original = btn.textContent;
+        btn.textContent = '✓ Copied';
+        setTimeout(function() { btn.textContent = original; }, 1500);
+      }, function() { alert('Copy failed — select manually.'); });
+    });
+  });
+
+  document.querySelectorAll('.feedback-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('.feedback-btn').forEach(function(b) { b.classList.remove('chosen'); });
+      btn.classList.add('chosen');
+      parent.querySelectorAll('.feedback-note').forEach(function(n) { n.remove(); });
+      const note = document.createElement('span');
+      note.className = 'feedback-note';
+      note.style.fontSize = '0.82rem';
+      note.style.color = 'var(--text-dim)';
+      note.textContent = btn.dataset.fb === 'yes' ? '  Thanks for the feedback.' : '  Thanks — what\'s missing? File an issue on GitHub.';
+      parent.appendChild(note);
+    });
+  });
+</script>
+
 </body>
 </html>
