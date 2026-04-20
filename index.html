@@ -458,14 +458,430 @@
     </article>
 
     <article class="page" data-page-id="first-session"><div class="eyebrow">Get started</div><div class="page-head"><h1>Your first session</h1></div><div class="coming-soon"><div class="coming-soon-title">Full walkthrough coming with v0.1.1</div><div class="coming-soon-body">In the meantime, see the <a data-page="quickstart">flight quickstart</a> or the <a data-page="intro">worked example on the intro page</a>.</div></div></article>
-    <article class="page" data-page-id="quickstart"><div class="eyebrow">Get started</div><div class="page-head"><h1>Quickstart: flight negotiation</h1></div><p class="lede">A copy-paste walkthrough of the SFO → JFK example, with real JSON envelopes you can paste into your agent. In the meantime, the <a data-page="intro">intro page</a> shows the full session visually.</p><div class="coming-soon"><div class="coming-soon-title">Code samples coming with the Apr 22 release</div><div class="coming-soon-body">Samples for Buyer, Arbiter, and Merchant agents in Python + TypeScript, integration tests, and a running arbiter endpoint.</div></div></article>
-    <article class="page" data-page-id="architecture"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Architecture</h1></div><p class="lede">For the conceptual overview, see <a data-page="three-role-model">the three-role model</a> and <a data-page="commitments">commitments &amp; privacy</a>.</p><div class="coming-soon"><div class="coming-soon-title">Diagrams coming with the Apr 22 release</div></div></article>
+    <article class="page" data-page-id="quickstart">
+      <div class="eyebrow">Get started</div>
+      <div class="page-head"><h1>Quickstart: flight negotiation</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">A runnable OANP v0.1 session in under two minutes. Clone the reference repo, run one command, watch a complete SFO → JFK negotiation print every envelope plus the signed agreement.</p>
+
+      <h2>1. Clone and run</h2>
+      <pre>git clone https://github.com/oanp-protocol/reference
+cd reference/examples/flight
+python3 run.py</pre>
+      <p>No dependencies beyond the Python 3.10+ standard library. You'll see the full message sequence below, round-by-round verdicts from the arbiter, and the final signed artifact.</p>
+
+      <h2>2. What each message looks like</h2>
+      <p>Every OANP message is a plain JSON envelope. Here's the opening message the Buyer Agent sends:</p>
+      <pre>{
+  "oanp_version": "0.1",
+  "message_id": "01D15651843C02F1860C180602",
+  "session_id": "0153F5DB7DED18746A7BAD5CC5",
+  "timestamp": "2026-04-28T14:00:00Z",
+  "sender": {
+    "role": "buyer",
+    "agent_id": "buyer-001"
+  },
+  "type": "session.open",
+  "payload": {
+    "item": { "route": "SFO-JFK", "date": "2026-04-28" },
+    "max_rounds": 5,
+    "constraints_commit": "0xfd6b8b899c3e4309"
+  }
+}</pre>
+      <p>Notice what <em>isn't</em> in that payload: the buyer's true ceiling, budget, urgency, or seat preferences. All of that stays private to the buyer's process. The arbiter receives only the <code>constraints_commit</code> — a SHA-256 hash of the canonicalized constraints. If the buyer tries to change them mid-session, the commitment won't match (invariant I3).</p>
+
+      <h2>3. A complete round</h2>
+      <p>Round 1 of the negotiation, in full:</p>
+      <pre>// Buyer proposes $320
+{ "type": "offer.propose",
+  "sender": { "role": "buyer", "agent_id": "buyer-001" },
+  "payload": { "round": 1, "price": 320 } }
+
+// Merchant counters $370
+{ "type": "offer.counter",
+  "sender": { "role": "merchant", "agent_id": "united-merchant-001" },
+  "payload": { "round": 1, "price": 370 } }
+
+// Arbiter emits verdict
+{ "type": "round.verdict",
+  "sender": { "role": "arbiter", "agent_id": "arbiter-001" },
+  "payload": {
+    "round": 1,
+    "status": "fair",
+    "rationale": "opening moves within committed rules"
+  } }</pre>
+
+      <h2>4. Signed agreement</h2>
+      <p>When both sides accept, the arbiter produces a <code>session.agree</code> with a detached signature over the full session digest:</p>
+      <pre>{ "type": "session.agree",
+  "sender": { "role": "arbiter", "agent_id": "arbiter-001" },
+  "payload": {
+    "final_price": 340,
+    "session_digest": "af60fd3b38c0a574...",
+    "signature": "b767c59b848ea50b...",
+    "signature_alg": "HS256",
+    "invariants_satisfied": ["I1","I2","I3","I4","I5","I6","I7"]
+  } }</pre>
+      <p>That digest + signature is what an ACP processor would attach as metadata on <code>checkout_session.create</code> — the agreement becomes the authorization for payment.</p>
+
+      <div class="callout"><div class="callout-title">Next</div><p>See <a data-page="build-buyer">Build a Buyer Agent</a>, <a data-page="build-merchant">Build a Merchant Agent</a>, or <a data-page="run-arbiter">Run an Arbiter</a> for the full code of each role.</p></div>
+
+      <a class="next-page" data-page="three-role-model"><div><div class="label">Next</div><div class="title">The three-role model →</div></div></a>
+    </article>
+    <article class="page" data-page-id="architecture">
+      <div class="eyebrow">About OANP</div>
+      <div class="page-head"><h1>Architecture</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">OANP is structurally simple: three roles, seven message types, one privacy boundary per role. This page shows where OANP sits in the agent commerce stack and how the three roles compose.</p>
+
+      <h2>Where OANP sits</h2>
+      <p>OANP fills the negotiation phase between discovery and payment in agent commerce:</p>
+
+      <div class="frame" style="padding: 1.5rem">
+        <svg viewBox="0 0 560 210" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; font-family: 'Inter', sans-serif;">
+          <defs>
+            <marker id="arrH" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+          <rect x="10" y="60" width="150" height="90" rx="10" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="85" y="85" text-anchor="middle" font-size="11" fill="var(--text-dim)" font-weight="500" letter-spacing="1">DISCOVERY</text>
+          <text x="85" y="110" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">MCP · UCP · A2A</text>
+          <text x="85" y="130" text-anchor="middle" font-size="11" fill="var(--text-dim)">find merchants, invoke tools</text>
+
+          <rect x="205" y="50" width="150" height="110" rx="10" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="280" y="76" text-anchor="middle" font-size="11" fill="var(--accent)" font-weight="600" letter-spacing="1">NEGOTIATION</text>
+          <text x="280" y="102" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">OANP v0.1</text>
+          <text x="280" y="125" text-anchor="middle" font-size="11" fill="var(--text-dim)">reach fair agreement</text>
+          <text x="280" y="142" text-anchor="middle" font-size="11" fill="var(--text-dim)">3 roles · 7 msg types</text>
+
+          <rect x="400" y="60" width="150" height="90" rx="10" fill="var(--bg-subtle)" stroke="var(--border)"/>
+          <text x="475" y="85" text-anchor="middle" font-size="11" fill="var(--text-dim)" font-weight="500" letter-spacing="1">PAYMENT</text>
+          <text x="475" y="110" text-anchor="middle" font-size="14" font-weight="600" fill="var(--text)">ACP · TAP · Agent Pay</text>
+          <text x="475" y="130" text-anchor="middle" font-size="11" fill="var(--text-dim)">settle the transaction</text>
+
+          <line x1="162" y1="105" x2="203" y2="105" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#arrH)"/>
+          <line x1="357" y1="105" x2="398" y2="105" stroke="var(--text-faint)" stroke-width="1.5" marker-end="url(#arrH)"/>
+
+          <text x="280" y="195" text-anchor="middle" font-size="11" fill="var(--text-faint)" font-style="italic">time — one agent-to-agent transaction →</text>
+        </svg>
+      </div>
+
+      <h2>The three-role structure</h2>
+      <p>Inside a single OANP session, three roles exchange messages with distinct trust boundaries:</p>
+
+      <div class="frame" style="padding: 1.5rem">
+        <svg viewBox="0 0 560 280" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; font-family: 'Inter', sans-serif;">
+          <defs>
+            <marker id="arrT" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--text-faint)"/>
+            </marker>
+          </defs>
+
+          <rect x="30" y="100" width="150" height="120" rx="12" fill="var(--buyer-bg)" stroke="var(--buyer-border)" stroke-width="1.5"/>
+          <circle cx="55" cy="126" r="5" fill="var(--buyer)"/>
+          <text x="70" y="130" font-size="13" font-weight="600" fill="var(--text)">Buyer Agent</text>
+          <text x="105" y="162" text-anchor="middle" font-size="11" fill="var(--text-dim)">represents the user</text>
+          <rect x="45" y="175" width="120" height="36" rx="4" fill="var(--vault-bg)" stroke="var(--vault-border)" stroke-dasharray="2,2"/>
+          <text x="105" y="192" text-anchor="middle" font-size="10" fill="var(--vault-label)" font-weight="600" letter-spacing="0.8">🔒 PRIVATE VAULT</text>
+          <text x="105" y="205" text-anchor="middle" font-size="10" fill="var(--vault-text)" font-style="italic">ceiling · urgency · prefs</text>
+
+          <rect x="205" y="30" width="150" height="100" rx="12" fill="var(--arbiter-bg)" stroke="var(--arbiter-border)" stroke-width="1.5"/>
+          <circle cx="230" cy="56" r="5" fill="var(--arbiter)"/>
+          <text x="245" y="60" font-size="13" font-weight="600" fill="var(--text)">Arbiter</text>
+          <text x="280" y="84" text-anchor="middle" font-size="11" fill="var(--text-dim)">judges rules</text>
+          <text x="280" y="100" text-anchor="middle" font-size="10" fill="var(--arbiter)" font-family="'JetBrains Mono',monospace">commits · I1–I7</text>
+          <text x="280" y="116" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-style="italic">no vault access</text>
+
+          <rect x="380" y="100" width="150" height="120" rx="12" fill="var(--merchant-bg)" stroke="var(--merchant-border)" stroke-width="1.5"/>
+          <circle cx="405" cy="126" r="5" fill="var(--merchant)"/>
+          <text x="420" y="130" font-size="13" font-weight="600" fill="var(--text)">Merchant Agent</text>
+          <text x="455" y="162" text-anchor="middle" font-size="11" fill="var(--text-dim)">represents seller</text>
+          <rect x="395" y="175" width="120" height="36" rx="4" fill="var(--vault-bg)" stroke="var(--vault-border)" stroke-dasharray="2,2"/>
+          <text x="455" y="192" text-anchor="middle" font-size="10" fill="var(--vault-label)" font-weight="600" letter-spacing="0.8">🔒 PRIVATE VAULT</text>
+          <text x="455" y="205" text-anchor="middle" font-size="10" fill="var(--vault-text)" font-style="italic">floor · strategy · occupancy</text>
+
+          <path d="M 180 140 Q 200 100 220 90" stroke="var(--text-faint)" stroke-width="1.2" fill="none" marker-end="url(#arrT)"/>
+          <path d="M 230 120 Q 220 150 195 150" stroke="var(--text-faint)" stroke-width="1.2" fill="none" marker-end="url(#arrT)"/>
+          <path d="M 335 90 Q 355 100 380 140" stroke="var(--text-faint)" stroke-width="1.2" fill="none" marker-end="url(#arrT)"/>
+          <path d="M 380 150 Q 350 140 335 120" stroke="var(--text-faint)" stroke-width="1.2" fill="none" marker-end="url(#arrT)"/>
+
+          <text x="280" y="260" text-anchor="middle" font-size="11" fill="var(--text-faint)" font-style="italic">all messages flow through the arbiter — the arbiter never holds either vault's values</text>
+        </svg>
+      </div>
+
+      <h2>Message flow</h2>
+      <p>A session produces exactly seven message types, exchanged in a fixed order:</p>
+      <ol>
+        <li><code>session.open</code> — Buyer opens, includes constraint commitment</li>
+        <li><code>session.ack</code> — Merchant acknowledges, includes their commitment</li>
+        <li><code>offer.propose</code> / <code>offer.counter</code> — round-by-round exchange</li>
+        <li><code>round.verdict</code> — Arbiter emits after each round</li>
+        <li><code>offer.accept</code> — Either side accepts the standing offer</li>
+        <li><code>session.agree</code> — Arbiter signs the final artifact</li>
+      </ol>
+      <p>See <a data-page="message-format">Message format</a> for the full envelope spec and <a data-page="state-machine">Session state machine</a> for the transition diagram.</p>
+
+      <a class="next-page" data-page="state-machine"><div><div class="label">Next</div><div class="title">Session state machine →</div></div></a>
+    </article>
     <article class="page" data-page-id="roles"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Roles &amp; responsibilities</h1></div><p class="lede">See <a data-page="three-role-model">the three-role model</a> for the full breakdown of Buyer, Arbiter, and Merchant responsibilities.</p></article>
-    <article class="page" data-page-id="state-machine"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Session state machine</h1></div><p class="lede">OANP sessions move through four states: <code>OPENING → NEGOTIATING → EVALUATING → AGREED | CLOSED</code>.</p><div class="coming-soon"><div class="coming-soon-title">Full state-transition diagram coming with v0.1.1</div></div></article>
+    <article class="page" data-page-id="state-machine">
+      <div class="eyebrow">About OANP</div>
+      <div class="page-head"><h1>Session state machine</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">An OANP session moves through four states. The arbiter is the authority for all transitions; both parties observe the arbiter's verdicts and react accordingly.</p>
+
+      <div class="frame" style="padding: 1.5rem">
+        <svg viewBox="0 0 620 340" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: auto; font-family: 'Inter', sans-serif;">
+          <defs>
+            <marker id="arrS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--text-secondary)"/>
+            </marker>
+          </defs>
+
+          <rect x="30" y="140" width="120" height="55" rx="8" fill="var(--bg-subtle)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="90" y="163" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="'JetBrains Mono',monospace">OPENING</text>
+          <text x="90" y="180" text-anchor="middle" font-size="10" fill="var(--text-dim)">commitments locked</text>
+
+          <rect x="200" y="140" width="140" height="55" rx="8" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="2"/>
+          <text x="270" y="163" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="'JetBrains Mono',monospace">NEGOTIATING</text>
+          <text x="270" y="180" text-anchor="middle" font-size="10" fill="var(--text-dim)">rounds 1..N</text>
+
+          <rect x="390" y="140" width="140" height="55" rx="8" fill="var(--bg-subtle)" stroke="var(--border-strong)" stroke-width="1.5"/>
+          <text x="460" y="163" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="'JetBrains Mono',monospace">EVALUATING</text>
+          <text x="460" y="180" text-anchor="middle" font-size="10" fill="var(--text-dim)">arbiter verdict</text>
+
+          <rect x="170" y="270" width="120" height="45" rx="8" fill="var(--merchant-bg)" stroke="var(--merchant-border)" stroke-width="1.5"/>
+          <text x="230" y="292" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="'JetBrains Mono',monospace">AGREED</text>
+          <text x="230" y="307" text-anchor="middle" font-size="10" fill="var(--text-dim)">artifact signed</text>
+
+          <rect x="340" y="270" width="120" height="45" rx="8" fill="var(--bg-subtle)" stroke="var(--border-strong)" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <text x="400" y="292" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)" font-family="'JetBrains Mono',monospace">CLOSED</text>
+          <text x="400" y="307" text-anchor="middle" font-size="10" fill="var(--text-dim)">no agreement</text>
+
+          <circle cx="20" cy="167" r="5" fill="var(--text)"/>
+          <line x1="25" y1="167" x2="28" y2="167" stroke="var(--text)" stroke-width="2" marker-end="url(#arrS)"/>
+
+          <line x1="150" y1="167" x2="197" y2="167" stroke="var(--text-secondary)" stroke-width="1.5" marker-end="url(#arrS)"/>
+          <text x="173" y="158" text-anchor="middle" font-size="10" fill="var(--text-dim)">ack</text>
+
+          <line x1="340" y1="167" x2="387" y2="167" stroke="var(--text-secondary)" stroke-width="1.5" marker-end="url(#arrS)"/>
+          <text x="363" y="158" text-anchor="middle" font-size="10" fill="var(--text-dim)">offer</text>
+
+          <path d="M 400 195 Q 330 230 290 195" stroke="var(--text-secondary)" stroke-width="1.5" fill="none" marker-end="url(#arrS)"/>
+          <text x="342" y="230" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-style="italic">continue</text>
+
+          <path d="M 270 195 Q 250 235 230 268" stroke="var(--merchant)" stroke-width="1.8" fill="none" marker-end="url(#arrS)"/>
+          <text x="200" y="235" text-anchor="middle" font-size="10" fill="var(--merchant)" font-weight="600">accept</text>
+
+          <path d="M 460 195 Q 430 235 400 268" stroke="var(--text-secondary)" stroke-width="1.5" fill="none" marker-end="url(#arrS)" stroke-dasharray="4,2"/>
+          <text x="485" y="235" text-anchor="middle" font-size="10" fill="var(--text-dim)" font-style="italic">timeout · I1 · I4 violation</text>
+
+          <text x="310" y="35" text-anchor="middle" font-size="12" fill="var(--text)" font-weight="600">Session lifecycle</text>
+          <text x="310" y="52" text-anchor="middle" font-size="10" fill="var(--text-dim)">All transitions are driven by arbiter verdicts (I5)</text>
+        </svg>
+      </div>
+
+      <h2>State definitions</h2>
+      <ul>
+        <li><strong><code>OPENING</code></strong> — Buyer has sent <code>session.open</code>. Waiting for merchant's <code>session.ack</code>. Both constraint commitments are locked at this point (I3).</li>
+        <li><strong><code>NEGOTIATING</code></strong> — Rounds of <code>offer.propose</code> / <code>offer.counter</code>. Each round must complete before entering EVALUATING.</li>
+        <li><strong><code>EVALUATING</code></strong> — Arbiter has observed a round's moves and is emitting a <code>round.verdict</code>. If the verdict is <code>fair</code> and no acceptance, session returns to NEGOTIATING. If an acceptance arrived, transitions to AGREED.</li>
+        <li><strong><code>AGREED</code></strong> — Terminal. Arbiter signs <code>session.agree</code> over the full session digest (I6). The signed artifact is the handoff to ACP checkout.</li>
+        <li><strong><code>CLOSED</code></strong> — Terminal. Session ended without agreement. Possible reasons: <code>max_rounds</code> exceeded (I1), I4 violation (either side reneging), buyer withdraws, timeout, or arbiter-detected invariant failure.</li>
+      </ul>
+
+      <h2>Transition rules</h2>
+      <ul>
+        <li>Only the arbiter transitions states. Buyer and merchant observe verdicts and react; they do not unilaterally advance the state.</li>
+        <li>Every <code>NEGOTIATING → EVALUATING</code> transition emits exactly one <code>round.verdict</code> (I5).</li>
+        <li>Every terminal state writes a final message: <code>session.agree</code> for AGREED, <code>session.close</code> with a reason code for CLOSED.</li>
+      </ul>
+
+      <a class="next-page" data-page="commitments"><div><div class="label">Next</div><div class="title">Commitments &amp; privacy →</div></div></a>
+    </article>
     <article class="page" data-page-id="versioning"><div class="eyebrow">About OANP</div><div class="page-head"><h1>Versioning</h1></div><p class="lede">OANP uses SemVer. v0.1 is the initial draft; v0.2 will add multi-merchant sessions and richer fairness profiles.</p></article>
-    <article class="page" data-page-id="build-buyer"><div class="eyebrow">Build with OANP</div><div class="page-head"><h1>Build a Buyer Agent</h1></div><p class="lede">A Buyer Agent opens a session, proposes offers, and receives a signed agreement.</p><div class="coming-soon"><div class="coming-soon-title">Starter kit shipping Apr 22</div><div class="coming-soon-body">Python and TypeScript templates will land with the launch. Source will be at <a href="https://github.com/oanp-protocol/reference" target="_blank" rel="noopener">oanp-protocol/reference</a>.</div></div></article>
-    <article class="page" data-page-id="build-merchant"><div class="eyebrow">Build with OANP</div><div class="page-head"><h1>Build a Merchant Agent</h1></div><p class="lede">A Merchant Agent responds to session.open, counters offers, and accepts within its committed constraints.</p><div class="coming-soon"><div class="coming-soon-title">Starter kit shipping Apr 22</div></div></article>
-    <article class="page" data-page-id="run-arbiter"><div class="eyebrow">Build with OANP</div><div class="page-head"><h1>Run an Arbiter</h1></div><p class="lede">An arbiter observes the session, emits round verdicts, and JWS-signs the final artifact.</p><div class="coming-soon"><div class="coming-soon-title">Reference arbiter shipping Apr 22</div></div></article>
+    <article class="page" data-page-id="build-buyer">
+      <div class="eyebrow">Build with OANP</div>
+      <div class="page-head"><h1>Build a Buyer Agent</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">A Buyer Agent represents the user. It opens sessions, proposes offers, decides whether to concede or accept, and receives the signed agreement. Its private vault (true ceiling, urgency, preferences) never leaves its process.</p>
+
+      <h2>Responsibilities</h2>
+      <ul>
+        <li>Hold the user's private constraints — budget, true ceiling, urgency, preferences.</li>
+        <li>Open the session with a hash commitment over those constraints (I3).</li>
+        <li>Emit <code>offer.propose</code> values that monotonically concede toward agreement (I4).</li>
+        <li>Decide, each round, whether to continue, accept, or withdraw — using only the merchant's public moves and its own private vault.</li>
+        <li>Never expose vault values outside the agent process, and never violate its own commitment.</li>
+      </ul>
+
+      <h2>Reference code</h2>
+      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/buyer.py" target="_blank" rel="noopener"><code>examples/flight/buyer.py</code></a>:</p>
+      <pre>class BuyerAgent:
+    def __init__(self, agent_id, constraints):
+        # Private vault — never leaves this object.
+        self._constraints = dict(constraints)
+        self.agent_id = agent_id
+        self.session_id = None
+        self._offers = []
+
+    def open(self, session_id, item, max_rounds=5):
+        self.session_id = session_id
+        to_commit = {
+            "constraints": self._constraints,
+            "item": item,
+            "max_rounds": max_rounds,
+        }
+        self._committed = commit_constraints(to_commit)
+        return make_envelope(
+            session_id, "buyer", self.agent_id, "session.open",
+            {"item": item, "max_rounds": max_rounds,
+             "constraints_commit": self._committed},
+        )
+
+    def propose(self, price):
+        if price > self._constraints["true_ceiling"]:
+            raise ValueError("would exceed private ceiling")
+        if self._offers and price &lt; self._offers[-1]:
+            raise ValueError("I4 violation: must concede, not renege")
+        self._offers.append(price)
+        return make_envelope(
+            self.session_id, "buyer", self.agent_id, "offer.propose",
+            {"round": len(self._offers), "price": price},
+        )</pre>
+
+      <div class="callout"><div class="callout-title">Three guards in one class</div><p>The <code>propose</code> method enforces both the private ceiling (never expose vault) and invariant I4 (monotonic concession) as runtime assertions. A misbehaving buyer can't be built without explicitly bypassing these checks.</p></div>
+
+      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/buyer.py" target="_blank" rel="noopener">Read the full BuyerAgent on GitHub</a>
+
+      <a class="next-page" data-page="build-merchant"><div><div class="label">Next</div><div class="title">Build a Merchant Agent →</div></div></a>
+    </article>
+    <article class="page" data-page-id="build-merchant">
+      <div class="eyebrow">Build with OANP</div>
+      <div class="page-head"><h1>Build a Merchant Agent</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">A Merchant Agent represents the seller. It responds to <code>session.open</code>, counters buyer offers, and accepts when the buyer reaches a price above its private floor. Floor price and pricing strategy never leave its process.</p>
+
+      <h2>Responsibilities</h2>
+      <ul>
+        <li>Hold the merchant's private constraints — floor price, ideal price, inventory pressure, strategy parameters.</li>
+        <li>Acknowledge the session with its own constraint commitment (I3).</li>
+        <li>Decide, for each <code>offer.propose</code>, whether to counter or accept — using only the buyer's public offer and its own private vault.</li>
+        <li>Counter values must monotonically decrease toward agreement (I4). Once accepted, no reneging.</li>
+        <li>Never expose vault values (especially the floor price) in any wire message.</li>
+      </ul>
+
+      <h2>Reference code</h2>
+      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/merchant.py" target="_blank" rel="noopener"><code>examples/flight/merchant.py</code></a>:</p>
+      <pre>class MerchantAgent:
+    def __init__(self, agent_id, constraints):
+        # Private vault — never leaves this object.
+        self._constraints = dict(constraints)
+        self.agent_id = agent_id
+        self.session_id = None
+        self._counters = []
+
+    def handle_propose(self, buyer_price):
+        floor = self._constraints["floor_price"]
+        ideal = self._constraints["ideal_price"]
+
+        if buyer_price >= ideal:
+            return self._accept(buyer_price)            # good enough
+        if buyer_price &lt; floor:
+            counter = self._counters[-1] - 15 if self._counters else ideal + 10
+            return self._counter(max(counter, floor))    # stay above floor
+
+        # Between floor and ideal — concede a little, stay above floor.
+        next_counter = max(self._counters[-1] - 15, buyer_price + 5, floor)
+        if next_counter >= self._counters[-1]:
+            return self._accept(buyer_price)             # would renege; accept instead
+        return self._counter(next_counter)
+
+    def _counter(self, price):
+        if self._counters and price > self._counters[-1]:
+            raise ValueError("I4 violation: counter went up")
+        self._counters.append(price)
+        return make_envelope(self.session_id, "merchant", self.agent_id,
+                             "offer.counter",
+                             {"round": len(self._counters), "price": price})</pre>
+
+      <div class="callout"><div class="callout-title">The floor price never appears in output</div><p>Notice <code>floor</code> is referenced only in <code>handle_propose</code>'s comparison logic — it's never included in a returned envelope. The buyer and the arbiter learn about the floor only indirectly: by observing which counter-offers the merchant emits.</p></div>
+
+      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/merchant.py" target="_blank" rel="noopener">Read the full MerchantAgent on GitHub</a>
+
+      <a class="next-page" data-page="run-arbiter"><div><div class="label">Next</div><div class="title">Run an Arbiter →</div></div></a>
+    </article>
+    <article class="page" data-page-id="run-arbiter">
+      <div class="eyebrow">Build with OANP</div>
+      <div class="page-head"><h1>Run an Arbiter</h1><div class="page-actions"><button class="page-action copy-page">📋 Copy page</button></div></div>
+      <p class="lede">An Arbiter is the neutral third role. It observes every message, enforces the seven fairness invariants in real time, emits one <code>round.verdict</code> per round, and JWS-signs the final <code>session.agree</code>. It holds commitments, not values.</p>
+
+      <h2>Responsibilities</h2>
+      <ul>
+        <li><strong>Observe</strong> every protocol message; maintain the session log for I7 (auditable history).</li>
+        <li><strong>Enforce I4</strong> — monotonic concession on both sides. Raise if a buyer reneges (lowers) or a merchant reneges (raises).</li>
+        <li><strong>Enforce I1</strong> — bounded rounds. Close the session if round count exceeds <code>max_rounds</code>.</li>
+        <li><strong>Emit one verdict per round</strong> (I5) with a status (<code>fair</code> / <code>fair_but_stuck</code> / <code>violated</code>) and a short rationale.</li>
+        <li><strong>Sign the final artifact</strong> over a digest of the full log (I6), using JWS detached signatures.</li>
+      </ul>
+
+      <h2>Reference code</h2>
+      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/arbiter.py" target="_blank" rel="noopener"><code>examples/flight/arbiter.py</code></a>:</p>
+      <pre>class Arbiter:
+    def __init__(self, agent_id, max_rounds=5):
+        self.agent_id = agent_id
+        self.max_rounds = max_rounds
+        self.log = []                    # I7 — auditable history
+        self.buyer_offers = []
+        self.merchant_counters = []
+        self.verdicts = []
+
+    def observe(self, env):
+        self.log.append(env.to_json())
+        if env.type == "offer.propose":
+            # I4 — buyer's offers must move up toward agreement.
+            if self.buyer_offers and env.payload["price"] &lt; self.buyer_offers[-1]:
+                raise ArbiterError("I4: buyer reneged")
+            self.buyer_offers.append(env.payload["price"])
+        elif env.type == "offer.counter":
+            if self.merchant_counters and env.payload["price"] > self.merchant_counters[-1]:
+                raise ArbiterError("I4: merchant reneged")
+            self.merchant_counters.append(env.payload["price"])
+
+    def emit_round_verdict(self):
+        round_n = min(len(self.buyer_offers), len(self.merchant_counters))
+        # I1 — bounded rounds
+        if round_n > self.max_rounds:
+            raise ArbiterError("I1: exceeded max_rounds")
+        spread = self.merchant_counters[round_n-1] - self.buyer_offers[round_n-1]
+        if round_n > 1:
+            prior = self.merchant_counters[round_n-2] - self.buyer_offers[round_n-2]
+            status = "fair" if spread &lt; prior else "fair_but_stuck"
+        else:
+            status = "fair"
+        return make_envelope(self.session_id, "arbiter", self.agent_id,
+                             "round.verdict", {"round": round_n, "status": status, ...})
+
+    def sign_agreement(self, price, key):
+        digest = session_digest(self.log)
+        signature = sign(digest, key)    # JWS detached in production
+        return make_envelope(self.session_id, "arbiter", self.agent_id,
+                             "session.agree",
+                             {"final_price": price, "session_digest": digest,
+                              "signature": signature, "signature_alg": "HS256",
+                              "invariants_satisfied": list(INVARIANTS.keys())})</pre>
+
+      <div class="callout"><div class="callout-title">The arbiter sees prices, not vaults</div><p>Notice <code>buyer_offers</code> and <code>merchant_counters</code> only ever contain public offer values — the numbers that already crossed the wire as <code>offer.propose</code> / <code>offer.counter</code>. The arbiter never accesses <code>_constraints</code> on either agent. Its verdicts are formed entirely from public moves + committed invariants.</p></div>
+
+      <h2>Operating an arbiter as a service</h2>
+      <p>The reference code runs in-process. In production, arbiters typically run as a hosted service with:</p>
+      <ul>
+        <li>A public endpoint (HTTPS POST, MCP tool, or SSE) that accepts OANP envelopes.</li>
+        <li>A persisted session log — minimum retention covers the dispute window for whatever domain is being arbitrated.</li>
+        <li>A signing key rotated on a fixed schedule. Public verification keys published at a well-known URL.</li>
+        <li>A monitoring surface that tracks invariant-violation rates — high rates indicate misconfigured counterparties or attempted abuse.</li>
+      </ul>
+
+      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/arbiter.py" target="_blank" rel="noopener">Read the full Arbiter on GitHub</a>
+
+      <a class="next-page" data-page="coexistence"><div><div class="label">Next</div><div class="title">Coexistence: MCP, ACP →</div></div></a>
+    </article>
     <article class="page" data-page-id="arbitration-flow"><div class="eyebrow">Specification</div><div class="page-head"><h1>v0.1 Arbitration flow</h1></div><p class="lede">Full specification of the three-role state machine, the happy path, and fairness-violation recovery.</p><a href="https://github.com/oanp-protocol/spec/blob/main/spec/v0.1/arbitration-flow.md" target="_blank" rel="noopener" class="btn-spec">Read the full specification on GitHub</a></article>
     <article class="page" data-page-id="conformance"><div class="eyebrow">Developer tools</div><div class="page-head"><h1>Conformance checklist</h1></div><p class="lede">Checklist for verifying an implementation complies with v0.1.</p><div class="coming-soon"><div class="coming-soon-title">Checklist shipping Apr 22</div></div></article>
 
