@@ -465,9 +465,11 @@
 
       <h2>1. Clone and run</h2>
       <pre>git clone https://github.com/oanp-protocol/reference
-cd reference/examples/flight
-python3 run.py</pre>
-      <p>No dependencies beyond the Python 3.10+ standard library. You'll see the full message sequence below, round-by-round verdicts from the arbiter, and the final signed artifact.</p>
+cd reference
+uv sync
+uv run oanp-ref demo</pre>
+      <p>Requires <a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">uv</a> + Python 3.11+. Zero runtime dependencies; dev tools are pytest + coverage only. You'll see the full message sequence below, round-by-round verdicts from the arbiter, and the final signed artifact.</p>
+      <p style="margin-top: 0.5rem; font-size: 0.92rem; color: var(--text-dim)">Prefer library use? <code>from oanp_ref import BuyerAgent, MerchantAgent, Arbiter</code>.</p>
 
       <h2>2. What each message looks like</h2>
       <p>Every OANP message is a plain JSON envelope. Here's the opening message the Buyer Agent sends:</p>
@@ -713,7 +715,7 @@ python3 run.py</pre>
       </ul>
 
       <h2>Reference code</h2>
-      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/buyer.py" target="_blank" rel="noopener"><code>examples/flight/buyer.py</code></a>:</p>
+      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/src/oanp_ref/buyer.py" target="_blank" rel="noopener"><code>src/oanp_ref/buyer.py</code></a>:</p>
       <pre>class BuyerAgent:
     def __init__(self, agent_id, constraints):
         # Private vault — never leaves this object.
@@ -749,7 +751,7 @@ python3 run.py</pre>
 
       <div class="callout"><div class="callout-title">Three guards in one class</div><p>The <code>propose</code> method enforces both the private ceiling (never expose vault) and invariant I4 (monotonic concession) as runtime assertions. A misbehaving buyer can't be built without explicitly bypassing these checks.</p></div>
 
-      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/buyer.py" target="_blank" rel="noopener">Read the full BuyerAgent on GitHub</a>
+      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/src/oanp_ref/buyer.py" target="_blank" rel="noopener">Read the full BuyerAgent on GitHub</a>
 
       <a class="next-page" data-page="build-merchant"><div><div class="label">Next</div><div class="title">Build a Merchant Agent →</div></div></a>
     </article>
@@ -768,7 +770,7 @@ python3 run.py</pre>
       </ul>
 
       <h2>Reference code</h2>
-      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/merchant.py" target="_blank" rel="noopener"><code>examples/flight/merchant.py</code></a>:</p>
+      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/src/oanp_ref/merchant.py" target="_blank" rel="noopener"><code>src/oanp_ref/merchant.py</code></a>:</p>
       <pre>class MerchantAgent:
     def __init__(self, agent_id, constraints):
         # Private vault — never leaves this object.
@@ -803,7 +805,7 @@ python3 run.py</pre>
 
       <div class="callout"><div class="callout-title">The floor price never appears in output</div><p>Notice <code>floor</code> is referenced only in <code>handle_propose</code>'s comparison logic — it's never included in a returned envelope. The buyer and the arbiter learn about the floor only indirectly: by observing which counter-offers the merchant emits.</p></div>
 
-      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/merchant.py" target="_blank" rel="noopener">Read the full MerchantAgent on GitHub</a>
+      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/src/oanp_ref/merchant.py" target="_blank" rel="noopener">Read the full MerchantAgent on GitHub</a>
 
       <a class="next-page" data-page="run-arbiter"><div><div class="label">Next</div><div class="title">Run an Arbiter →</div></div></a>
     </article>
@@ -822,7 +824,7 @@ python3 run.py</pre>
       </ul>
 
       <h2>Reference code</h2>
-      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/arbiter.py" target="_blank" rel="noopener"><code>examples/flight/arbiter.py</code></a>:</p>
+      <p>Excerpt from <a href="https://github.com/oanp-protocol/reference/blob/main/src/oanp_ref/arbiter.py" target="_blank" rel="noopener"><code>src/oanp_ref/arbiter.py</code></a>:</p>
       <pre>class Arbiter:
     def __init__(self, agent_id, max_rounds=5):
         self.agent_id = agent_id
@@ -878,7 +880,7 @@ python3 run.py</pre>
         <li>A monitoring surface that tracks invariant-violation rates — high rates indicate misconfigured counterparties or attempted abuse.</li>
       </ul>
 
-      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/examples/flight/arbiter.py" target="_blank" rel="noopener">Read the full Arbiter on GitHub</a>
+      <a class="btn-spec" href="https://github.com/oanp-protocol/reference/blob/main/src/oanp_ref/arbiter.py" target="_blank" rel="noopener">Read the full Arbiter on GitHub</a>
 
       <a class="next-page" data-page="coexistence"><div><div class="label">Next</div><div class="title">Coexistence: MCP, ACP →</div></div></a>
     </article>
